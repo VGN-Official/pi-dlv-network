@@ -352,3 +352,9 @@ document.addEventListener("DOMContentLoaded", () => {
         console.error("[Pi-DLV Target] Critical Error: Interaction button element was not found in the DOM hierarchy layout.");
     }
 });
+
+// Force the mock payment prompt to pop up the second the dashboard page is ready
+window.addEventListener('load', () => {
+    console.log("Dashboard loaded in container. Triggering test payment...");
+    runTestTransaction();
+});
