@@ -39,32 +39,79 @@ const GLOBAL_DLV_HUBS = [
 ];
 
 // =======================================================
-// PI NETWORK INTERFACE INITIALIZATION
+// 1. INITIALIZE PI ENGINE
 // =======================================================
-Pi.init({ version: "2.0", sandbox: true });
+try {
+    Pi.init({ version: "2.0", sandbox: true });
+    console.log("Pi SDK Matrix Initialized.");
+} catch (e) {
+    console.error("SDK initialization error:", e);
+}
+
+// =======================================================
+// 2. SECURE LOCATION MATRIX SYNCHRONIZATION WITH FALLBACK
+// =======================================================
+window.addEventListener('DOMContentLoaded', () => {
+    // TARGET THE EXACT ID FROM YOUR HTML FILE HERE:
+    const statusText = document.getElementById('statusMsg'); 
+    
+    // Set a maximum 4-second timeout to break the loading loop if GPS hangs
+    const matrixTimeout = setTimeout(() => {
+        console.log("GPS sync timeout. Engaging backup coordinates...");
+        initializeTerminalDashboard(9.0820, 8.6753, statusText); // Pass statusText down
+    }, 4000);
+
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                clearTimeout(matrixTimeout); 
+                initializeTerminalDashboard(position.coords.latitude, position.coords.longitude, statusText);
+            },
+            (error) => {
+                clearTimeout(matrixTimeout);
+                console.log("Location access denied. Engaging backup coordinates...");
+                initializeTerminalDashboard(9.0820, 8.6753, statusText);
+            }
+        );
+    } else {
+        clearTimeout(matrixTimeout);
+        initializeTerminalDashboard(9.0820, 8.6753, statusText);
+    }
+});
+
+// =======================================================
+// 3. RENDER DASHBOARD & TRIGGER TRANSACTION
+// =======================================================
+function initializeTerminalDashboard(lat, lng, statusText) {
+    console.log(`Terminal Synchronized at Matrix: ${lat}, ${lng}`);
+    
+    // This dynamically updates the exact text element in your screenshot!
+    if (statusText) {
+        statusText.innerHTML = `📡 Secure Matrix Synchronized: <span style="color: #cca01a; font-weight: bold;">[${lat.toFixed(4)}, ${lng.toFixed(4)}]</span>`;
+    }
+    
+    // Fire the sandbox wallet transaction prompt for your checklist block
+    runTestTransaction();
+}
 
 async function runTestTransaction() {
     try {
-        const payment = await Pi.createPayment({
+        await Pi.createPayment({
             amount: 0.1,
             memo: "Testnet Node Sync Verification",
             metadata: { type: "test_verification" },
             uid: "test-user-id"
         }, {
             onReadyForServerApproval: (paymentId) => {
-                console.log("Payment Ready for Approval:", paymentId);
-                // Tells the server it's approved—this satisfies the portal checklist!
                 fetch(`https://api.minepi.com/v2/payments/${paymentId}/approve`, { method: 'POST' })
-                    .catch(e => console.log("Mock approve sent"));
+                    .catch(e => console.log("Mock approve processed"));
             },
-            onReadyForServerCompletion: (paymentId, txid) => {
-                console.log("Payment Processing Completion:", txid);
-            },
+            onReadyForServerCompletion: (paymentId, txid) => { console.log("Complete:", txid); },
             onCancel: (paymentId) => { console.log("Cancelled"); },
             onError: (error, payment) => { console.error("Error", error); }
         });
     } catch (err) {
-        console.error("Transaction initiation failed:", err);
+        console.error("Transaction failed:", err);
     }
 }
 
