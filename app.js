@@ -1,4 +1,6 @@
+// =======================================================
 // 🌐 GLOBAL OPERATIONAL HUBS CONFIGURATION MATRIX
+// =======================================================
 const GLOBAL_DLV_HUBS = [
     {
         hub_id: "HUB-NG-LOS",
@@ -6,7 +8,7 @@ const GLOBAL_DLV_HUBS = [
         country: "Nigeria",
         target_lat: 6.5244,
         target_lon: 3.3792,
-        radius_km: 50, // Covers Ikeja, Yaba, Lekki, Mainland
+        radius_km: 50,
         locale_slug: "western_nigeria_grid"
     },
     {
@@ -38,89 +40,71 @@ const GLOBAL_DLV_HUBS = [
     }
 ];
 
+// 👤 GLOBAL STATE FOR TESTING FLOWS
+const currentPioneerUsername = "VGN_Operator_01";
+const isDevelopmentMode = true;
+const isPiBrowserEngine = (typeof Pi !== 'undefined');
+
 // =======================================================
-// 1. INITIALIZE PI ENGINE
+// 1. INITIALIZE PI ENGINE (WITH CRUCIAL PAYMENTS SCOPE)
 // =======================================================
-try {
-    Pi.init({ version: "2.0", sandbox: true });
-    console.log("Pi SDK Matrix Initialized.");
-} catch (e) {
-    console.error("SDK initialization error:", e);
+if (isPiBrowserEngine) {
+    try {
+        Pi.init({ version: "2.0", sandbox: true });
+        console.log("Pi SDK Matrix Initialized.");
+    } catch (e) {
+        console.error("SDK initialization error:", e);
+    }
 }
 
 // =======================================================
-// 2. SECURE LOCATION MATRIX SYNCHRONIZATION WITH FALLBACK
+// 2. SECURE LOGISTIC GATEWAY AUTH HANDLER
 // =======================================================
-window.addEventListener('DOMContentLoaded', () => {
-    // TARGET THE EXACT ID FROM YOUR HTML FILE HERE:
-    const statusText = document.getElementById('statusMsg'); 
+document.addEventListener("DOMContentLoaded", () => {
+    const authButton = document.getElementById("piSignInBtn"); 
     
-    // Set a maximum 4-second timeout to break the loading loop if GPS hangs
-    const matrixTimeout = setTimeout(() => {
-        console.log("GPS sync timeout. Engaging backup coordinates...");
-        initializeTerminalDashboard(9.0820, 8.6753, statusText); // Pass statusText down
-    }, 4000);
+    if (authButton) {
+        authButton.addEventListener("click", (e) => {
+            e.preventDefault();
+            console.log("[Pi-DLV SDK] Initializing Secure Auth sequence...");
+            
+            if (isPiBrowserEngine) {
+                // Set a 1-second safety timer to beat Sandbox iframe cross-origin freezes
+                const authBypassTimeout = setTimeout(() => {
+                    console.warn("[Pi-DLV SDK] Sandbox frame delay. Engaging Bypass...");
+                    unlockOperationalDashboard();
+                }, 1000);
 
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
-                clearTimeout(matrixTimeout); 
-                initializeTerminalDashboard(position.coords.latitude, position.coords.longitude, statusText);
-            },
-            (error) => {
-                clearTimeout(matrixTimeout);
-                console.log("Location access denied. Engaging backup coordinates...");
-                initializeTerminalDashboard(9.0820, 8.6753, statusText);
+                try {
+                    // CRUCIAL PI CHECKLIST FIX: Added 'payments' explicitly to the scope request list!
+                   Pi.authenticate(['username', 'payments'], (onScopesGranted) => {
+                        clearTimeout(authBypassTimeout); 
+                        console.log(`[Pi-DLV SDK] Sandbox login verified: ${onScopesGranted.user.username}`);
+                        unlockOperationalDashboard();
+                    }, (onAuthError) => {
+                        clearTimeout(authBypassTimeout);
+                        console.error("[Pi-DLV SDK] Sandbox auth failed, engaging fallback:", onAuthError);
+                        unlockOperationalDashboard();
+                    });
+                } catch (err) {
+                    clearTimeout(authBypassTimeout);
+                    console.warn("[Pi-DLV SDK] Caught cross-origin window block. Forcing transition.");
+                    unlockOperationalDashboard();
+                }
+            } else {
+                // Local desktop development environment fallback (Live Server)
+                unlockOperationalDashboard();
             }
-        );
+        });
     } else {
-        clearTimeout(matrixTimeout);
-        initializeTerminalDashboard(9.0820, 8.6753, statusText);
+        console.error("[Pi-DLV Target] Critical Error: Sign-in button element was not found in the DOM hierarchy.");
     }
 });
 
 // =======================================================
-// 3. RENDER DASHBOARD & TRIGGER TRANSACTION
+// 3. SECURE GEOLOCATION MATRIX LOGIC
 // =======================================================
-function initializeTerminalDashboard(lat, lng, statusText) {
-    console.log(`Terminal Synchronized at Matrix: ${lat}, ${lng}`);
-    
-    // This dynamically updates the exact text element in your screenshot!
-    if (statusText) {
-        statusText.innerHTML = `📡 Secure Matrix Synchronized: <span style="color: #cca01a; font-weight: bold;">[${lat.toFixed(4)}, ${lng.toFixed(4)}]</span>`;
-    }
-    
-    // Fire the sandbox wallet transaction prompt for your checklist block
-    runTestTransaction();
-}
-
-async function runTestTransaction() {
-    try {
-        await Pi.createPayment({
-            amount: 0.1,
-            memo: "Testnet Node Sync Verification",
-            metadata: { type: "test_verification" },
-            uid: "test-user-id"
-        }, {
-            onReadyForServerApproval: (paymentId) => {
-                fetch(`https://api.minepi.com/v2/payments/${paymentId}/approve`, { method: 'POST' })
-                    .catch(e => console.log("Mock approve processed"));
-            },
-            onReadyForServerCompletion: (paymentId, txid) => { console.log("Complete:", txid); },
-            onCancel: (paymentId) => { console.log("Cancelled"); },
-            onError: (error, payment) => { console.error("Error", error); }
-        });
-    } catch (err) {
-        console.error("Transaction failed:", err);
-    }
-}
-
-// 👤 GLOBAL STATE FOR TESTING FLOWS
-const currentPioneerUsername = "VGN_Operator_01";
-const isDevelopmentMode = true;
-
-// 🧮 HAVERSINE GEOLOCATION ROUTER
-function calculateDistance(lat1, lon1, lat2, lon2) {
+    function calculateDistance(lat1, lon1, lat2, lon2) {
     const R = 6371; // Earth's radius in kilometers
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
@@ -129,11 +113,10 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
               Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
               
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c; // Distance in kilometers
+    return R * c; 
 }
 
-// 🗺️ DYNAMICALLY MATCH PIONEER TO NEAREST HUB
-function routePioneerToHub(userLat, userLon) {
+    function routePioneerToHub(userLat, userLon) {
     console.log(`[Pi-DLV Core] Analyzing coordinates: Lat ${userLat}, Lon ${userLon}`);
 
     const matchedHub = GLOBAL_DLV_HUBS.find(hub => {
@@ -142,7 +125,7 @@ function routePioneerToHub(userLat, userLon) {
     });
 
     if (matchedHub) {
-        console.log(`[Pi-DLV Core] Operator assigned to: ${matchedHub.name} (${matchedHub.hub_id})`);
+        console.log(`[Pi-DLV Core] Operator assigned to: ${matchedHub.name}`);
         return matchedHub;
     }
 
@@ -155,7 +138,9 @@ function routePioneerToHub(userLat, userLon) {
     };
 }
 
-// 🔓 UNLOCK DASHBOARD PANEL
+// =======================================================
+// 4. UNLOCK DASHBOARD PANEL & TRIGGER ENVIRONMENT CHECK
+// =======================================================
 function unlockOperationalDashboard() {
     const gatewayLock = document.getElementById('vgnGatewayLock');
     const mainDashboard = document.getElementById('vgnMainDashboard');
@@ -166,11 +151,14 @@ function unlockOperationalDashboard() {
         mainDashboard.style.display = "block";    
     }
 
-    // Put this inside your app's startup sequence or window.onload listener
+   // TRIGGER BLOCKCHAIN TRANSACTION SAFELY
+if (isPiBrowserEngine && window.navigator.userAgent.includes("PiBrowser")) {
     runTestTransaction();
+} else {
+    console.log("[System Core] Desktop browser environment active. Real blockchain payment deferred.");
+}
 
-    // 🛰️ INITIALIZE REVENUE RECONCILIATION & GEOTARGETING
-    if (navigator.geolocation) {
+ if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
             (position) => {
                 const lat = position.coords.latitude;
@@ -185,22 +173,21 @@ function unlockOperationalDashboard() {
                         </div>
                     `;
                 }
-                
-                seedLocalVerificationGigs(userHub.locale_slug, lat, lon);
-            },
+            seedLocalVerificationGigs(userHub.locale_slug, lat, lon);
+    },
             (error) => {
                 console.error("[Pi-DLV Core] Geolocation access denied or timed out:", error.message);
-                seedLocalVerificationGigs("global_roam");
+                seedLocalVerificationGigs("bauchi_metropolitan");
             }
         );
-    } else {
-// ✨ FIXED: Added fallback for environments completely lacking GPS API support
-        console.warn("[Pi-DLV Core] Browser environment lacks Geolocation capabilities. Loading Global Grid.");
+} else {
         seedLocalVerificationGigs("global_roam");
     }
 }
 
-// 🗄️ MOCK DATABASE MATRIX
+// =======================================================
+// 5. DATA MATRIX MANAGEMENT (MOCK GIG ENGINE)
+// =======================================================
 const MOCK_GIGS_DATABASE = {
     "western_nigeria_grid": [
         { id: "GIG-LOS-001", title: "Route Verification: Ikeja Underbridge", desc: "Confirm traffic flow and report any local congestion bottlenecks.", lat: 6.5967, lon: 3.3421, payout: 0.40 },
@@ -214,8 +201,7 @@ const MOCK_GIGS_DATABASE = {
     ]
 };
 
-// 🌱 SEED GIGS DATA CARDS
-function seedLocalVerificationGigs(localeSlug, userLat = null, userLon = null) {
+    function seedLocalVerificationGigs(localeSlug, userLat = null, userLon = null) {
     const container = document.getElementById('dlvGigsContainer');
     const countIndicator = document.getElementById('taskCountIndicator');
     
@@ -241,7 +227,7 @@ function seedLocalVerificationGigs(localeSlug, userLat = null, userLon = null) {
             
             if (distanceKM <= 10000 || isDevelopmentMode) { 
                 proximityLabel = `🟢 <span style="color:#388E3C; font-weight:bold;">At Destination Matrix (Within 100m)</span>`;
-                actionButtonState = `style="background: linear-gradient(135deg, #388E3C, #2E7D32); color: white; cursor: pointer;" onclick="executeVerification('${gig.id}', ${gig.payout})"`;
+                actionButtonState = `style="background: linear-gradient(135deg, #388E3C, #2E7D32); color: white; cursor: pointer;" onclick="executeMockVerification('${gig.id}', '${gig.payout}')"`;
             } else {
                 proximityLabel = `📍 Distance: <strong>${distanceKM.toFixed(2)} km</strong> away`;
                 actionButtonState = `disabled style="background: #2a2a2a; color: #cca01a; border: 1px solid #cca01a; opacity: 0.6; cursor: not-allowed;"`;
@@ -251,12 +237,12 @@ function seedLocalVerificationGigs(localeSlug, userLat = null, userLon = null) {
         container.innerHTML += `
             <div id="card-${gig.id}" style="background: #1a1a1a; padding: 18px; border-radius: 8px; border-left: 3px solid #cca01a; box-shadow: 0 4px 10px rgba(0,0,0,0.3); margin-bottom: 15px;">
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
-                    <h4 style="margin: 0; color: #fff; font-size: 1.05em; font-weight: 600;">${gig.title}</h4>
-                    <span style="color: #388E3C; font-weight: bold; background: rgba(56,142,60,0.1); padding: 2px 8px; border-radius: 4px; font-size: 0.9em;">+ ${gig.payout.toFixed(2)} π</span>
+                    <h4 style="margin: 0; color: #fff; font-size: 1.05em; font-weight: 600; font-family: sans-serif;">${gig.title}</h4>
+                    <span style="color: #388E3C; font-weight: bold; background: rgba(56,142,60,0.1); padding: 2px 8px; border-radius: 4px; font-size: 0.9em; font-family: sans-serif;">+ ${gig.payout.toFixed(2)} π</span>
                 </div>
-                <p style="margin: 0 0 12px 0; color: #999; font-size: 0.85em; line-height: 1.4;">${gig.desc}</p>
+                <p style="margin: 0 0 12px 0; color: #999; font-size: 0.85em; line-height: 1.4; font-family: sans-serif;">${gig.desc}</p>
                 <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #2a2a2a; padding-top: 12px;">
-                    <div style="font-size: 0.8em; color: #aaa;">${proximityLabel}</div>
+                    <div style="font-size: 0.8em; color: #aaa; font-family: sans-serif;">${proximityLabel}</div>
                     <button id="btn-${gig.id}" ${actionButtonState} style="padding: 8px 16px; border: none; border-radius: 4px; font-weight: bold; font-size: 0.8em; text-transform: uppercase;">
                         ${userLat === null ? "Awaiting GPS" : (proximityLabel.includes("At Destination") ? "Verify Data" : "Move Closer")}
                     </button>
@@ -266,21 +252,20 @@ function seedLocalVerificationGigs(localeSlug, userLat = null, userLon = null) {
     });
 }
 
-// 🪙 ENGINE IDENTIFICATION
-const isPiBrowserEngine = (typeof Pi !== 'undefined');
-
-// 🏁 EXECUTE VERIFICATION LOG ENTRY
-function executeVerification(gigId, payoutAmount) {
+// =======================================================
+// 6. INTERACTIVE SIMULATION LOGIC & WALLET STUB
+// =======================================================
+function executeMockVerification(gigId, payout) {
+    alert(`Initiating Cryptographic Geofence Check for ${gigId}...\nValidating regional terminal telemetry node...`);
+    
     const card = document.getElementById(`card-${gigId}`);
     const button = document.getElementById(`btn-${gigId}`);
     
     if (button) {
-        button.innerText = "🔄 COMMITTING TRANSIT TELEMETRY...";
+        button.innerText = "🔄 LOGGING TELEMETRY...";
         button.disabled = true;
     }
 
-    console.log(`[Pi-DLV Ledger] Initializing payout sequence for task: ${gigId}`);
-    
     setTimeout(() => {
         if (card) {
             card.style.opacity = "0.3";
@@ -288,73 +273,46 @@ function executeVerification(gigId, payoutAmount) {
             setTimeout(() => card.remove(), 400);
         }
 
-        const verifiedEl = document.getElementById('statsVerifiedCount');
-        const payoutEl = document.getElementById('statsPiEarned');
-        
-        if (verifiedEl) verifiedEl.innerText = parseInt(verifiedEl.innerText) + 1;
-        if (payoutEl) {
-            let currentTotal = parseFloat(payoutEl.innerText) || 0;
-            payoutEl.innerText = `${(currentTotal + payoutAmount).toFixed(2)} π`;
+        // 1. Update Verified Gigs Count Element
+        const verifiedDisplay = document.getElementById('statsVerifiedCount'); 
+        if (verifiedDisplay) {
+            let currentGigs = parseInt(verifiedDisplay.innerText) || 0;
+            verifiedDisplay.innerText = currentGigs + 1;
+        }
+
+        // 2. Update Pi Escrow Total Card Element (Fixed to point to statsPiEarned)
+        const escrowDisplay = document.getElementById('statsPiEarned');
+        if (escrowDisplay) {
+            let currentEscrow = parseFloat(escrowDisplay.innerText.replace(/[^\d.]/g, '')) || 0;
+            let plannedPayout = parseFloat(payout) || 0;
+            let newTotal = currentEscrow + plannedPayout;
+            escrowDisplay.innerText = `${newTotal.toFixed(2)} π`;
         }
         
-        alert(`🔒 Telemetry Locked! Task ${gigId} successfully pushed to blockchain ledger framework.`);
-    }, 1800);
+        alert(`🔒 Telemetry Matrix Locked! Task ${gigId} successfully pushed to blockchain sandbox ledger.`);
+    }, 1200);
 }
 
-// ⚡ WAIT FOR DOCUMENT TO LOAD, THEN WIRE UP THE BUTTON WITH HYBRID SELECTOR
-document.addEventListener("DOMContentLoaded", () => {
-    // 🛠️ Core Ecosystem Initialization
-    if (typeof Pi !== 'undefined') {
-        console.log("[Pi-DLV SDK] Running core ecosystem initialization...");
-        Pi.init({ version: "2.0", sandbox: true });
-    }
-
-    // Broad search selector for your authorization action item
-    const authButton = document.querySelector("button, a, div[onclick*='authenticate'], .btn, #auth-btn"); 
-    
-    if (authButton) {
-        console.log("[Pi-DLV Target] Secure target element locked and wired.");
-        authButton.removeAttribute("onclick"); 
-        authButton.style.cursor = "pointer";
-        
-        authButton.addEventListener("click", (e) => {
-            e.preventDefault();
-            console.log("[Pi-DLV SDK] Initializing simulated Secure Auth sequence...");
-            
-            if (typeof Pi !== 'undefined') {
-                // 🛰️ Set a 1-second safety timer to beat Sandbox iframe cross-origin freezes
-                const authBypassTimeout = setTimeout(() => {
-                    console.warn("[Pi-DLV SDK] Sandbox cross-origin frame delay detected. Engaging VGN Secure Local Bypass Mode...");
-                    unlockOperationalDashboard();
-                }, 1000);
-
-                try {
-                    Pi.authenticate(['username'], (onScopesGranted) => {
-                        clearTimeout(authBypassTimeout); 
-                        console.log(`[Pi-DLV SDK] Sandbox login verified: ${onScopesGranted.user.username}`);
-                        unlockOperationalDashboard();
-                    }, (onAuthError) => {
-                        clearTimeout(authBypassTimeout);
-                        console.error("[Pi-DLV SDK] Sandbox auth failed, engaging fallback:", onAuthError);
-                        unlockOperationalDashboard();
-                    });
-                } catch (err) {
-                    clearTimeout(authBypassTimeout);
-                    console.warn("[Pi-DLV SDK] Caught cross-origin window block. Forcing dashboard transition.");
-                    unlockOperationalDashboard();
-                }
-            } else {
-                // Local fallback if Pi engine isn't injected
-                unlockOperationalDashboard();
-            }
+// =======================================================
+// 7. BLOCKCHAIN NETWORK TRANSACTION PROMPT
+// =======================================================
+async function runTestTransaction() {
+    try {
+        await Pi.createPayment({
+            amount: 0.1,
+            memo: "Testnet Node Sync Verification",
+            metadata: { type: "test_verification" },
+            uid: "test-user-id"
+        }, {
+            onReadyForServerApproval: (paymentId) => {
+                fetch(`https://api.minepi.com/v2/payments/${paymentId}/approve`, { method: 'POST' })
+                    .catch(e => console.log("Mock approve processed"));
+            },
+            onReadyForServerCompletion: (paymentId, txid) => { console.log("Complete:", txid); },
+            onCancel: (paymentId) => { console.log("Cancelled"); },
+            onError: (error, payment) => { console.error("Error", error); }
         });
-    } else {
-        console.error("[Pi-DLV Target] Critical Error: Interaction button element was not found in the DOM hierarchy layout.");
+    } catch (err) {
+        console.error("Transaction failed:", err);
     }
-});
-
-// Force the mock payment prompt to pop up the second the dashboard page is ready
-window.addEventListener('load', () => {
-    console.log("Dashboard loaded in container. Triggering test payment...");
-    runTestTransaction();
-});
+}

@@ -11,35 +11,28 @@
 </head>
 <body style="margin: 0; background-color: #121212; color: #ffffff;">
 
-    <div id="vgnGatewayLock" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background: #1a1a1a; padding: 20px; text-align: center;">
-        
+<div id="vgnGatewayLock" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background: #1a1a1a; padding: 20px; text-align: center;">
         <h1 style="color: #cca01a; margin-bottom: 5px; font-weight: bold; font-family: sans-serif; font-size: 2.2em;">Pi-DLV Network</h1>
         <p style="color: #666666; font-size: 0.8em; text-transform: uppercase; letter-spacing: 2px; margin-top: 0; margin-bottom: 25px; font-weight: bold;">
             Powered by Vigilan Global Network Limited
-        </p>
-        
+       </p>
         <p style="color: #aaaaaa; max-width: 340px; margin: 0 auto 30px auto; font-size: 0.95em; line-height: 1.5; font-family: sans-serif;">
             Decentralized Logistics & Verification Hub. Authenticate to sync with your local regional transit telemetry grid.
         </p>
-        
-        <button id="piSignInBtn" style="background: linear-gradient(135deg, #e0a904, #cca01a); color: #1a1a1a; font-weight: bold; padding: 16px 36px; border: none; border-radius: 30px; font-size: 1.1em; box-shadow: 0 4px 20px rgba(224, 169, 4, 0.3); cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px;">
+       <button id="piSignInBtn" style="background: linear-gradient(135deg, #e0a904, #cca01a); color: #1a1a1a; font-weight: bold; padding: 16px 36px; border: none; border-radius: 30px; font-size: 1.1em; box-shadow: 0 4px 20px rgba(224, 169, 4, 0.3); cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px;">
             🔑 ENTER VIA PI SECURE AUTH
-        </button>
-
+       </button>
         <p id="gatewayStatus" style="margin-top: 20px; color: #cca01a; font-size: 0.85em; font-weight: bold; font-family: sans-serif;"></p>
-    </div>
+   </div>
 
-
-    <div id="vgnMainDashboard" style="display: none;">
-        
+   <div id="vgnMainDashboard" style="display: none;">
         <div style="background: #1a1a1a; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2a2a2a;">
             <span style="font-weight: bold; color: #cca01a; letter-spacing: 0.5px; font-family: sans-serif;">🛰️ PI-DLV SYSTEM TERMINAL</span>
             <span style="background: #2a2a2a; font-size: 0.75em; padding: 4px 8px; border-radius: 4px; color: #888; font-weight: bold;">v1.0.0</span>
         </div>
 
         <div style="padding: 20px; font-family: 'Segoe UI', sans-serif;">
-            
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-bottom: 25px;">
+           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-bottom: 25px;">
                 <div style="background: #1a1a1a; padding: 15px; border-radius: 8px; border-bottom: 3px solid #cca01a; text-align: center;">
                     <span style="color: #888; font-size: 0.8em; text-transform: uppercase; font-weight: bold;">Verified Gigs</span>
                     <h3 id="statsVerifiedCount" style="margin: 5px 0 0 0; color: #cca01a; font-size: 1.6em;">0</h3>
@@ -59,13 +52,9 @@
                 <span id="taskCountIndicator" style="background: #cca01a; color: #1a1a1a; font-weight: bold; font-size: 0.8em; padding: 3px 10px; border-radius: 12px;">0 Active</span>
             </div>
 
-            <div id="dlvGigsContainer" style="display: grid; grid-template-columns: 1fr; gap: 15px;">
-                </div>
-            
+            <div id="dlvGigsContainer" style="display: grid; grid-template-columns: 1fr; gap: 15px;"></div>
         </div>
     </div>
 
-   
     <script src="app.js"></script>
-</body>
-</html>
+ </body>
