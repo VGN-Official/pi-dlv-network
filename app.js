@@ -344,7 +344,22 @@ function executeVerification(gigId, payout) {
                 button.innerText = "🔄 LOGGING TELEMETRY...";
                 button.disabled = true;
             }
-        },
+
+            // 2. HIT YOUR LIVE BACKEND ENGINE FOR THE APP SIGNATURE (Now inside the function scope)
+            fetch('https://your-backend-url.render.com/api/approve-payment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ paymentId: paymentId })
+            })
+            .then(res => res.json())
+            .then(data => {
+                console.log("Backend verification acknowledged:", data);
+            })
+            .catch(err => {
+                console.error("Network routing error:", err);
+            });
+        }, // <-- This single bracket/comma cleanly closes onReadyForServerApproval
+
         onReadyForServerCompletion: function(paymentId, txid) {
             console.log("Transaction hit the blockchain! TXID:", txid);
             
