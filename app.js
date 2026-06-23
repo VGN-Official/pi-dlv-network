@@ -301,46 +301,78 @@ const MOCK_GIGS_DATABASE = {
 }
 
 // =======================================================
-// 6. INTERACTIVE SIMULATION LOGIC & WALLET STUB
+// 6. REAL-WORLD BLOCKCHAIN HANDSHAKE & TELEMETRY LOGIC
 // =======================================================
-function executeMockVerification(gigId, payout) {
-    alert(`Initiating Cryptographic Geofence Check for ${gigId}...\nValidating regional terminal telemetry node...`);
-    
+function executeVerification(gigId, payout) {
+    // 1. Alert user about the security stake requirement
+    alert(`To execute validation for ${gigId}, a security stake of 0.1 Test-Pi is required.\nThis stake will be held in escrow until verification is confirmed.`);
+
+    // 2. Locate UI elements to handle visual terminal states
     const card = document.getElementById(`card-${gigId}`);
     const button = document.getElementById(`btn-${gigId}`);
     
-    if (button) {
-        button.innerText = "🔄 LOGGING TELEMETRY...";
-        button.disabled = true;
-    }
+    // 3. Initiate Official Pi Blockchain Payment Request Matrix
+    Pi.createPayment({
+        amount: 0.1, 
+        memo: `Security verification stake for task ${gigId}`,
+        metadata: { taskId: gigId, type: "verification_stake" }
+    }, {
+        onReadyForServerApproval: function(paymentId) {
+            console.log("Payment created! ID:", paymentId);
+            
+            // Immediately engage visual feedback loading state
+            if (button) {
+                button.innerText = "🔄 LOGGING TELEMETRY...";
+                button.disabled = true;
+            }
+        },
+        onReadyForServerCompletion: function(paymentId, txid) {
+            console.log("Transaction hit the blockchain! TXID:", txid);
+            
+            // Execute smooth terminal card fade-out animations seamlessly
+            if (card) {
+                card.style.opacity = "0.3";
+                card.style.transform = "scale(0.98)";
+                setTimeout(() => card.remove(), 400);
+            }
 
-    setTimeout(() => {
-        if (card) {
-            card.style.opacity = "0.3";
-            card.style.transform = "scale(0.98)";
-            setTimeout(() => card.remove(), 400);
-        }
+            // Update Verified Gigs Count Element
+            const verifiedDisplay = document.getElementById('statsVerifiedCount'); 
+            if (verifiedDisplay) {
+                let currentGigs = parseInt(verifiedDisplay.innerText) || 0;
+                verifiedDisplay.innerText = currentGigs + 1;
+            }
 
-        // 1. Update Verified Gigs Count Element
-        const verifiedDisplay = document.getElementById('statsVerifiedCount'); 
-        if (verifiedDisplay) {
-            let currentGigs = parseInt(verifiedDisplay.innerText) || 0;
-            verifiedDisplay.innerText = currentGigs + 1;
+            // Update Pi Escrow Total Card Element via clean regex extraction
+            const escrowDisplay = document.getElementById('statsPiEarned');
+            if (escrowDisplay) {
+                let currentEscrow = parseFloat(escrowDisplay.innerText.replace(/[^\d.]/g, '')) || 0;
+                let plannedPayout = parseFloat(payout) || 0;
+                let newTotal = currentEscrow + plannedPayout;
+                escrowDisplay.innerText = `${newTotal.toFixed(2)} π`;
+            }
+            
+            alert(`🔒 Telemetry Matrix Locked!\nTask ${gigId} successfully pushed to blockchain sandbox ledger.\nTXID: ${txid.substring(0, 12)}...`);
+        },
+        onCancel: function(paymentId) {
+            alert("Verification canceled by operator.");
+            // Restore button usability if wallet sheet is dismissed
+            if (button) {
+                button.innerText = "Verify Data";
+                button.disabled = false;
+            }
+        },
+        onError: function(error, payment) {
+            console.error("Pi Payment Error:", error);
+            alert("Terminal Sync Error: Blockchain payment failed.");
+            // Restore button usability on error event
+            if (button) {
+                button.innerText = "Verify Data";
+                button.disabled = false;
+            }
         }
-
-        // 2. Update Pi Escrow Total Card Element (Fixed to point to statsPiEarned)
-        const escrowDisplay = document.getElementById('statsPiEarned');
-        if (escrowDisplay) {
-            let currentEscrow = parseFloat(escrowDisplay.innerText.replace(/[^\d.]/g, '')) || 0;
-            let plannedPayout = parseFloat(payout) || 0;
-            let newTotal = currentEscrow + plannedPayout;
-            escrowDisplay.innerText = `${newTotal.toFixed(2)} π`;
-        }
-        
-        alert(`🔒 Telemetry Matrix Locked! Task ${gigId} successfully pushed to blockchain sandbox ledger.`);
-    }, 1200);
+    });
 }
-
 // =======================================================
 // 7. BLOCKCHAIN NETWORK TRANSACTION PROMPT
 // =======================================================
