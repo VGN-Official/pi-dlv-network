@@ -333,7 +333,8 @@ function executeVerification(gigId, payout) {
     Pi.createPayment({
         amount: 0.1, 
         memo: `Security verification stake for task ${gigId}`,
-        metadata: { taskId: gigId, type: "verification_stake" }
+        metadata: { taskId: gigId, type: "verification_stake" },
+        uid: "operator-test-session-node" // 🔴 CRITICAL ADDITION FOR THE BLOCKCHAIN HANDSHAKE
     }, {
         onReadyForServerApproval: function(paymentId) {
             console.log("Payment created! ID:", paymentId);
