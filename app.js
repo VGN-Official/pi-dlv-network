@@ -21,6 +21,42 @@ const GLOBAL_DLV_HUBS = [
         locale_slug: "bauchi_metropolitan"
     },
     {
+        hub_id: "HUB-NG-ABV",
+        name: "Abuja Federal Capital Grid",
+        country: "Nigeria",
+        target_lat: 9.0765,
+        target_lon: 7.3986,
+        radius_km: 40,
+        locale_slug: "abuja_metropolitan"
+    },
+    {
+        hub_id: "HUB-NG-KAN",
+        name: "Kano Commercial Grid Node",
+        country: "Nigeria",
+        target_lat: 12.0022,
+        target_lon: 8.5920,
+        radius_km: 35,
+        locale_slug: "kano_grid"
+    },
+    {
+        hub_id: "HUB-NG-PHC",
+        name: "Port Harcourt Industrial Hub",
+        country: "Nigeria",
+        target_lat: 4.8156,
+        target_lon: 7.0498,
+        radius_km: 40,
+        locale_slug: "phc_grid"
+    },
+    {
+        hub_id: "HUB-GH-ACC",
+        name: "Accra West-African Node",
+        country: "Ghana",
+        target_lat: 5.6037,
+        target_lon: -0.1870,
+        radius_km: 45,
+        locale_slug: "accra_grid"
+    },
+    {
         hub_id: "HUB-UK-LON",
         name: "London Greater Logistics Grid",
         country: "United Kingdom",
@@ -196,11 +232,23 @@ const MOCK_GIGS_DATABASE = {
     "bauchi_metropolitan": [
         { id: "GIG-BAU-001", title: "Intersection Check: Yandoka Road", desc: "Verify clearance status of the commercial vehicle bypass corridor.", lat: 10.3180, lon: 9.8460, payout: 0.50 }
     ],
+    "abuja_metropolitan": [
+        { id: "GIG-ABV-001", title: "CBD Telemetry Synchronization", desc: "Verify coordinate synchronization and asset flow metrics around the central business sector.", lat: 9.0620, lon: 7.4870, payout: 0.60 },
+        { id: "GIG-ABV-002", title: "Garki Hub Waypoint Verification", desc: "Execute localized proximity check to validate secondary node infrastructure parameters.", lat: 9.0200, lon: 7.4800, payout: 0.45 }
+    ],
+    "kano_grid": [
+        { id: "GIG-KAN-001", title: "Fagge Market Corridor Audit", desc: "Verify commercial transit access pathways and synchronize localized telemetry nodes.", lat: 12.0100, lon: 8.5300, payout: 0.55 }
+    ],
+    "phc_grid": [
+        { id: "GIG-PHC-001", title: "Trans-Amadi Freight Transit Check", desc: "Log active cargo delivery corridor clearance and map hardware waypoint metrics.", lat: 4.8050, lon: 7.0250, payout: 0.70 }
+    ],
+    "accra_grid": [
+        { id: "GIG-ACC-001", title: "Makola Logistics Flow Validation", desc: "Verify sub-regional transit coordination metrics and confirm grid node alignment.", lat: 5.5500, lon: -0.2000, payout: 0.65 }
+    ],
     "global_roam": [
         { id: "GIG-GLO-001", title: "Global Network Sync Check", desc: "Headless server node ping verification task for automated compliance tracking.", lat: 0.0000, lon: 0.0000, payout: 0.10 }
     ]
-};
-
+ };
     function seedLocalVerificationGigs(localeSlug, userLat = null, userLon = null) {
     const container = document.getElementById('dlvGigsContainer');
     const countIndicator = document.getElementById('taskCountIndicator');
