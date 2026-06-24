@@ -346,7 +346,7 @@ function executeVerification(gigId, payout) {
             }
 
             // 2. HIT YOUR LIVE BACKEND ENGINE FOR THE APP SIGNATURE (Now inside the function scope)
-            fetch('https://your-backend-url.render.com/api/approve-payment', {
+            fetch('https://pi-dlv-network.vercel.app/api/approve-payment', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ paymentId: paymentId })
