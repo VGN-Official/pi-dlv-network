@@ -104,27 +104,30 @@ if (isPiBrowserEngine) {
     }
 }
 
-/// Required callback structure by the Pi SDK specification
+// Required callback structure by the Pi SDK specification
 function onIncompletePaymentFound(payment) {
     console.log("Found uncompleted transaction anchor:", payment);
     
-    // 🚀 CRITICAL FIX: Automatically hit your separate Render backend to clear the blockage
-    const backendUrl = "https://your-pi-dlv-backend.onrender.com/api/payments/incomplete"; 
+    // 🚀 Update this URL to point to your live Vercel completion endpoint
+    const backendUrl = "https://your-vercel-domain.com/api/payments/complete"; 
     
     fetch(backendUrl, {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
         },
-        body: JSON.stringify({ payment })
+        body: JSON.stringify({ 
+            paymentId: payment.identifier, 
+            txid: payment.transaction.txid 
+        })
     })
     .then(response => response.json())
     .then(data => {
-        console.log("Incomplete payment automatically cleared by backend:", data);
-        // Once cleared, the SDK pipeline relaxes and allows new wallet actions!
+        console.log("Pending payment successfully cleared/completed:", data);
+        alert("Pending transaction resolved! You can now process new transfers.");
     })
     .catch(err => {
-        console.error("Failed to clear stuck transaction queue:", err);
+        console.error("Failed to automatically clear pending queue:", err);
     });
 }
 
