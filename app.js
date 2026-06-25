@@ -116,7 +116,7 @@ function onIncompletePaymentFound(payment) {
     // Safe fallback if payment object structure varies slightly
     const txid = (payment.transaction && payment.transaction.txid) ? payment.transaction.txid : "mock_sandbox_txid";
 
-    fetch(`${BACKEND_URL}/api/payments/incomplete`, {
+    fetch(`${BACKEND_URL}/api/approve-payment`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
