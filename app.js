@@ -104,9 +104,28 @@ if (isPiBrowserEngine) {
     }
 }
 
-// Required callback structure by the Pi SDK specification
+/// Required callback structure by the Pi SDK specification
 function onIncompletePaymentFound(payment) {
     console.log("Found uncompleted transaction anchor:", payment);
+    
+    // 🚀 CRITICAL FIX: Automatically hit your separate Render backend to clear the blockage
+    const backendUrl = "https://your-pi-dlv-backend.onrender.com/api/payments/incomplete"; 
+    
+    fetch(backendUrl, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ payment })
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log("Incomplete payment automatically cleared by backend:", data);
+        // Once cleared, the SDK pipeline relaxes and allows new wallet actions!
+    })
+    .catch(err => {
+        console.error("Failed to clear stuck transaction queue:", err);
+    });
 }
 
 // =======================================================
