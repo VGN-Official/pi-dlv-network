@@ -80,9 +80,7 @@ const currentPioneerUsername = "VGN_Operator_01";
 const isDevelopmentMode = true;
 const isPiBrowserEngine = (typeof Pi !== 'undefined');
 
-// =======================================================
-// 1. INITIALIZE PI ENGINE (WITH CRUCIAL PAYMENTS SCOPE)
-// =======================================================
+
 // =======================================================
 // 1. INITIALIZE PI ENGINE & AUTO-SWEEP PENDING BLOCKS
 // =======================================================

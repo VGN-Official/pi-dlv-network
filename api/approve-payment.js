@@ -1,13 +1,12 @@
 import axios from 'axios';
 
 export default async function handler(req, res) {
-    // Enable CORS headers so your frontend can call it safely
+    // 1. Keep your clean CORS matrix intact
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-    // Handle the preflight OPTIONS request
-    if (req.method === 'OPTIONS') {
+ if (req.method === 'OPTIONS') {
         return res.status(200).end();
     }
 
@@ -15,7 +14,7 @@ export default async function handler(req, res) {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    const { paymentId } = req.body;
+    const { paymentId, txid } = req.body; // <-- Extract txid forwarded by the client
     const PI_API_KEY = process.env.PI_API_KEY;
 
     if (!paymentId) {
@@ -23,11 +22,17 @@ export default async function handler(req, res) {
     }
 
     try {
-        console.log(`[Vercel Serverless] Approving Payment ID: ${paymentId}`);
+        // 2. DYNAMIC LOOKUP: Switch endpoints depending on transaction progress
+        // If a blockchain txid exists, we MUST use 'complete' to resolve it on the ledger.
+        // If no txid exists yet, we call 'approve' to advance/clear it.
+        const endpoint = (txid && txid !== "mock_sandbox_txid") ? "complete" : "approve";
+        const postData = endpoint === "complete" ? { txid: txid } : {};
+
+        console.log(`[Vercel Serverless] Handling stuck ledger path via /${endpoint} for ID: ${paymentId}`);
 
         const response = await axios.post(
-            `https://api.minepi.com/v2/payments/${paymentId}/approve`,
-            {},
+            `https://api.minepi.com/v2/payments/${paymentId}/${endpoint}`,
+            postData,
             {
                 headers: {
                     Authorization: `Key ${PI_API_KEY}`,
@@ -36,7 +41,7 @@ export default async function handler(req, res) {
             }
         );
 
-        return res.status(200).json(response.data);
+        return res.status(200).json({ success: true, cleared: true, data: response.data });
     } catch (error) {
         console.error(`[Vercel Serverless] Handshake failure:`, error.response?.data || error.message);
         return res.status(500).json({ 
