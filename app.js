@@ -83,17 +83,19 @@ const isPiBrowserEngine = (typeof Pi !== 'undefined');
 // =======================================================
 // 1. INITIALIZE PI ENGINE (WITH CRUCIAL PAYMENTS SCOPE)
 // =======================================================
+// =======================================================
+// 1. INITIALIZE PI ENGINE & AUTO-SWEEP PENDING BLOCKS
+// =======================================================
 if (isPiBrowserEngine) {
     try {
         Pi.init({ version: "2.0", sandbox: true });
         console.log("Pi SDK Matrix Initialized.");
 
-        // 🔴 CRITICAL ADDITION: Run the authentication protocol right after init
+        // Pass our active clear function directly into the authentication handshake
         Pi.authenticate(['username', 'payments'], onIncompletePaymentFound)
             .then(function(auth) {
                 console.log(`[Pi-DLV Core] Operator authenticated: ${auth.user.username}`);
-                // Now that we are authenticated with GPS and Wallet scopes, trigger your tracking engine
-                initializeTrackingPipeline(); 
+                if (typeof initializeTrackingPipeline === "function") initializeTrackingPipeline(); 
             })
             .catch(function(authError) {
                 console.error("Pi Authentication mapping failed:", authError);
@@ -104,31 +106,21 @@ if (isPiBrowserEngine) {
     }
 }
 
-// Required callback structure by the Pi SDK specification
+// 🔴 THE AUTO-CLEAN PROTOCOL: Cancels stuck ledger sessions automatically
 function onIncompletePaymentFound(payment) {
-    console.log("Found uncompleted transaction anchor:", payment);
+    console.log("Stale/Incomplete ledger session detected:", payment.identifier);
     
-    // 🚀 Update this URL to point to your live Vercel completion endpoint
-    const backendUrl = "https://your-vercel-domain.com/api/payments/complete"; 
-    
-    fetch(backendUrl, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ 
-            paymentId: payment.identifier, 
-            txid: payment.transaction.txid 
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        console.log("Pending payment successfully cleared/completed:", data);
-        alert("Pending transaction resolved! You can now process new transfers.");
-    })
-    .catch(err => {
-        console.error("Failed to automatically clear pending queue:", err);
-    });
+    // Tell the Pi SDK to instantly clear the block so you can transact again!
+    // For a production app you would complete it, but for our sandbox test, we clear it.
+    if (window.Pi && window.Pi.cancelPayment) {
+        window.Pi.cancelPayment(payment.identifier)
+            .then(() => {
+                console.log(`[Pi-DLV SDK] Stale session ${payment.identifier} successfully swept clean.`);
+            })
+            .catch((err) => {
+                console.error("Failed to programmatically clear stale session:", err);
+            });
+    }
 }
 
 // =======================================================
