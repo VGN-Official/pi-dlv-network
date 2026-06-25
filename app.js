@@ -110,19 +110,24 @@ if (isPiBrowserEngine) {
 function onIncompletePaymentFound(payment) {
     console.log("Stale/Incomplete ledger session detected:", payment.identifier);
     
-    // Tell the Pi SDK to instantly clear the block so you can transact again!
-    // For a production app you would complete it, but for our sandbox test, we clear it.
-    if (window.Pi && window.Pi.cancelPayment) {
-        window.Pi.cancelPayment(payment.identifier)
-            .then(() => {
-                console.log(`[Pi-DLV SDK] Stale session ${payment.identifier} successfully swept clean.`);
-            })
-            .catch((err) => {
-                console.error("Failed to programmatically clear stale session:", err);
-            });
-    }
-}
+    // Using a relative path works perfectly if your backend api runs on the same Vercel app!
+    const BACKEND_URL = "https://pi-dlv-network.vercel.app"; 
 
+    // Safe fallback if payment object structure varies slightly
+    const txid = (payment.transaction && payment.transaction.txid) ? payment.transaction.txid : "mock_sandbox_txid";
+
+    fetch(`${BACKEND_URL}/api/payments/incomplete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            paymentId: payment.identifier,
+            txid: txid
+        })
+    })
+    .then(res => res.json())
+    .then(data => console.log("Vercel Backend response:", data))
+    .catch(err => console.error("Error communicating with Vercel:", err));
+}
 // =======================================================
 // 2. SECURE LOGISTIC GATEWAY AUTH HANDLER
 // =======================================================
