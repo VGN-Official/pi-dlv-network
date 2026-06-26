@@ -88,9 +88,8 @@ if (isPiBrowserEngine) {
     try {
         Pi.init({ version: "2.0", sandbox: true });
         console.log("Pi SDK Matrix Initialized.");
-
-        // Pass our active clear function directly into the authentication handshake
-        Pi.authenticate(['username', 'payments'], onIncompletePaymentFound)
+// 🎯 FIX: Removed the invalid 'payments' string from the array
+        Pi.authenticate(['username'], onIncompletePaymentFound)
             .then(function(auth) {
                 console.log(`[Pi-DLV Core] Operator authenticated: ${auth.user.username}`);
                 if (typeof initializeTrackingPipeline === "function") initializeTrackingPipeline(); 
