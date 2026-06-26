@@ -109,7 +109,7 @@ function onIncompletePaymentFound(payment) {
     console.log("Stale/Incomplete ledger session detected:", payment.identifier);
     
     // Using a relative path works perfectly if your backend api runs on the same Vercel app!
-    const BACKEND_URL = "https://pi-dlv-network.vercel.app"; 
+    const BACKEND_URL = ""; 
 
     // Safe fallback if payment object structure varies slightly
     const txid = (payment.transaction && payment.transaction.txid) ? payment.transaction.txid : "mock_sandbox_txid";
