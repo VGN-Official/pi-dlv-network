@@ -86,7 +86,7 @@ const isPiBrowserEngine = (typeof Pi !== 'undefined');
 // =======================================================
 if (isPiBrowserEngine) {
     try {
-        Pi.init({ version: "2.0", sandbox: false });
+        Pi.init({ version: "2.0", sandbox: true });
         console.log("Pi SDK Matrix Initialized.");
 // 🎯 FIX: Removed the invalid 'payments' string from the array
         Pi.authenticate(['username'], onIncompletePaymentFound)
