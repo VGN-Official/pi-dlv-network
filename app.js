@@ -86,7 +86,7 @@ const isPiBrowserEngine = (typeof Pi !== 'undefined');
 // =======================================================
 if (isPiBrowserEngine) {
     try {
-        Pi.init({ version: "2.0", sandbox: true });
+        Pi.init({ version: "2.0", sandbox: false });
         console.log("Pi SDK Matrix Initialized.");
 // 🎯 FIX: Removed the invalid 'payments' string from the array
         Pi.authenticate(['username'], onIncompletePaymentFound)
@@ -220,11 +220,11 @@ function unlockOperationalDashboard() {
     }
 
    // TRIGGER BLOCKCHAIN TRANSACTION SAFELY
-if (isPiBrowserEngine && window.navigator.userAgent.includes("PiBrowser")) {
-    runTestTransaction();
-} else {
-    console.log("[System Core] Desktop browser environment active. Real blockchain payment deferred.");
-}
+//if (isPiBrowserEngine && window.navigator.userAgent.includes("PiBrowser")) {
+//runTestTransaction();
+//} else {
+  //  console.log("[System Core] Desktop browser environment active. Real blockchain payment deferred.");
+//}
 
  if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
