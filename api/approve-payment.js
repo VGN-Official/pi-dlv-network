@@ -6,7 +6,7 @@ export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
- if (req.method === 'OPTIONS') {
+    if (req.method === 'OPTIONS') {
         return res.status(200).end();
     }
 
@@ -35,7 +35,8 @@ export default async function handler(req, res) {
             postData,
             {
                 headers: {
-                    Authorization: `Key ${PI_API_KEY}`,
+                    // FIX: Changed 'Key' to 'Bearer' so the Pi API authenticates securely
+                    Authorization: `Bearer ${PI_API_KEY}`,
                     'Content-Type': 'application/json'
                 }
             }
