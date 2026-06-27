@@ -1,8 +1,17 @@
 {
-  "rewrites": [
-    {
-      "source": "/validation-key.txt",
-      "destination": "/.well-known/validation-key.txt"
+  "version": 2,
+  "routes": [
+    { 
+      "src": "/validation-key.txt", 
+      "dest": "/.well-known/validation-key.txt" 
+    },
+    { 
+      "src": "/api/(.*)", 
+      "dest": "/api/approve-pament.js" 
+    },
+    { 
+      "src": "/(.*)", 
+      "dest": "/$1" 
     }
   ]
 }
