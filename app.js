@@ -328,7 +328,7 @@ const MOCK_GIGS_DATABASE = {
             }
         }
 
-        container.innerHTML += `
+       container.innerHTML += `
             <div id="card-${gig.id}" style="background: #1a1a1a; padding: 18px; border-radius: 8px; border-left: 3px solid #cca01a; box-shadow: 0 4px 10px rgba(0,0,0,0.3); margin-bottom: 15px;">
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
                     <h4 style="margin: 0; color: #fff; font-size: 1.05em; font-weight: 600; font-family: sans-serif;">${gig.title}</h4>
@@ -337,14 +337,17 @@ const MOCK_GIGS_DATABASE = {
                 <p style="margin: 0 0 12px 0; color: #999; font-size: 0.85em; line-height: 1.4; font-family: sans-serif;">${gig.desc}</p>
                 <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #2a2a2a; padding-top: 12px;">
                     <div style="font-size: 0.8em; color: #aaa; font-family: sans-serif;">${proximityLabel}</div>
-                    <button id="btn-${gig.id}" ${actionButtonState} style="padding: 8px 16px; border: none; border-radius: 4px; font-weight: bold; font-size: 0.8em; text-transform: uppercase;">
+                    
+                    <button id="btn-${gig.id}" onclick="window.executeVerification()" ${actionButtonState} style="padding: 8px 16px; border: none; border-radius: 4px; font-weight: bold; font-size: 0.8em; text-transform: uppercase;">
                         ${userLat === null ? "Awaiting GPS" : (proximityLabel.includes("At Destination") ? "Verify Data" : "Move Closer")}
                     </button>
+                    
                 </div>
             </div>
         `;
     });
 }
+
 
 // =======================================================
 // 6. REAL-WORLD BLOCKCHAIN HANDSHAKE & TELEMETRY LOGIC
