@@ -110,41 +110,31 @@ if (isPiBrowserEngine) {
 }
 // 🔴 THE AUTO-CLEAN PROTOCOL: Cancels stuck ledger sessions automatically
 function onIncompletePaymentFound(payment) {
-    console.log("Stale/Incomplete ledger session detected:", payment.identifier);
+    console.log("Incomplete payment detected:", payment.identifier);
     
-    // 1. Force check the exact payment structure
-    const paymentId = payment.identifier;
-    const txid = (payment.transaction && payment.transaction.txid) ? payment.transaction.txid : null;
+    // Safely extract the txid if it exists, otherwise default to an empty string
+    const transactionId = payment.transaction?.txid || "";
 
-    if (!txid) {
-        console.error("Critical error: No blockchain transaction hash found to complete.");
-        alert("Found an incomplete request initialization, but no blockchain signature exists yet. Check your developer portal app settings.");
-        return;
-    }
-
-    // 2. Direct hit to your backend bypass router
-    fetch("https://dev-pi-dlv-network.vercel.app/api/approve-payment", {
+    // Instantly forward to your fresh Vercel serverless function to resolve
+    fetch('/api/approve-payment', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+            'Content-Type': 'application/json'
+        },
         body: JSON.stringify({
-            action: "complete", // Tells backend logic to invoke the /v2/payments/:paymentId/complete endpoint
-            paymentId: paymentId,
-            txid: txid
+            action: "complete",
+            paymentId: payment.identifier,
+            txid: transactionId
         })
     })
-    .then(res => {
-        if (!res.ok) throw new Error(`Backend server responded with status: ${res.status}`);
-        return res.json();
-    })
-    .then(data => {
-        console.log("Vercel Backend execution success:", data);
-        alert("🎉 SUCCESS! The stuck blockchain payment has been verified and settled on VGN server! Your account is unfrozen.");
+    .then(response => response.json())
+    .then(result => {
+        console.log("Server response for incomplete payment:", result);
+        // Clear the screen and reset the terminal UI cleanly
         window.location.reload();
     })
     .catch(err => {
-        console.error("Handshake fail:", err);
-        // 🎯 EMERGENCY ACTION: Display the error visually on your phone screen since Vercel logs are blank!
-        alert(`Handshake Error: ${err.message}. Ensure your Vercel Environment variables have the correct Server API Key matching your new developer portal profile!`);
+        console.error("Failed to transmit auto-clear payload:", err);
     });
 }
 // =======================================================
