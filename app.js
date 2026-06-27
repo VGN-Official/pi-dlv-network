@@ -108,36 +108,32 @@ if (isPiBrowserEngine) {
         console.error("SDK initialization error:", e);
     }
 }
-// 🔴 THE AUTO-CLEAN PROTOCOL: Cancels stuck ledger sessions automatically
-//function onIncompletePaymentFound(payment) {
-   // console.log("Incomplete payment detected:", payment.identifier);
+// 🔴 THE AUTO-CLEAN PROTOCOL: Active for the new App Studio profile
+function onIncompletePaymentFound(payment) {
+    console.log("Incomplete payment detected on new App Profile:", payment.identifier);
     
-    // Safely extract the txid if it exists, otherwise default to an empty string
-    //const transactionId = payment.transaction?.txid || "";
+    const transactionId = payment.transaction?.txid || "";
 
-    // Instantly forward to your fresh Vercel serverless function to resolve
-    //fetch('/api/approve-payment', {
-      //  method: 'POST',
-        //headers: {
-          //  'Content-Type': 'application/json'
-        //},
-       // body: JSON.stringify({
-         //   action: "complete",
-           // paymentId: payment.identifier,
-            //txid: transactionId
-        //})
-   // })
-    //.then(response => response.json())
-    //.then(result => {
-        //console.log("Server response for incomplete payment:", result);
-        // Clear the screen and reset the terminal UI cleanly
-      //  window.location.reload();
-    //})
-    //.catch(err => {
-    //    console.error("Failed to transmit auto-clear payload:", err);
-  //  });
-//} 
-
+    fetch('/api/approve-payment', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            action: "complete",
+            paymentId: payment.identifier,
+            txid: transactionId
+        })
+    })
+    .then(response => response.json())
+    .then(result => {
+        console.log("Server response:", result);
+        window.location.reload();
+    })
+    .catch(err => {
+        console.error("Transmission fail:", err);
+    });
+}
 // =======================================================
 // 2. SECURE LOGISTIC GATEWAY AUTH HANDLER
 // =======================================================
