@@ -80,13 +80,19 @@ const currentPioneerUsername = "VGN_Operator_01";
 const isDevelopmentMode = true;
 const isPiBrowserEngine = (typeof Pi !== 'undefined');
 
-
+window.onerror = function(message, source, lineno, colno, error) {
+    const box = document.getElementById('debug-log-box');
+    if(box) {
+        box.innerHTML += `<br>⚠️ ERR: ${message} (Line ${lineno})`;
+    }
+    return false;
+};
 // =======================================================
 // 1. INITIALIZE PI ENGINE & AUTO-SWEEP PENDING BLOCKS
 // =======================================================
 if (isPiBrowserEngine) {
     try {
-        Pi.init({ version: "2.0", sandbox: true });
+        Pi.init({ version: "2.0", sandbox: false });
         console.log("Pi SDK Matrix Initialized.");
 // 🎯 FIX: Removed the invalid 'payments' string from the array
         Pi.authenticate(['username'], onIncompletePaymentFound)
