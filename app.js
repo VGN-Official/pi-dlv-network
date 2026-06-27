@@ -108,13 +108,12 @@ if (isPiBrowserEngine) {
         console.error("SDK initialization error:", e);
     }
 }
-
 // 🔴 THE AUTO-CLEAN PROTOCOL: Cancels stuck ledger sessions automatically
 function onIncompletePaymentFound(payment) {
     console.log("Stale/Incomplete ledger session detected:", payment.identifier);
     
-    // Using a relative path works perfectly if your backend api runs on the same Vercel app!
-    const BACKEND_URL = ""; 
+    // 🎯 FIX 1: Explicitly target your live development backend URL
+    const BACKEND_URL = "https://dev-pi-dlv-network.vercel.app"; 
 
     // Safe fallback if payment object structure varies slightly
     const txid = (payment.transaction && payment.transaction.txid) ? payment.transaction.txid : "mock_sandbox_txid";
@@ -123,12 +122,18 @@ function onIncompletePaymentFound(payment) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+            action: "complete", // 🎯 FIX 2: Explicitly tell your Vercel backend to run the /complete handshake
             paymentId: payment.identifier,
             txid: txid
         })
     })
     .then(res => res.json())
-    .then(data => console.log("Vercel Backend response:", data))
+    .then(data => {
+        console.log("Vercel Backend response:", data);
+        // 🎯 FIX 3: Alert and reload to clear the "Pending Payment" popup instantly!
+        alert("Stuck payment processing complete! Refreshing your terminal console...");
+        window.location.reload();
+    })
     .catch(err => console.error("Error communicating with Vercel:", err));
 }
 // =======================================================
