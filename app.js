@@ -358,21 +358,17 @@ if (typeof Pi !== 'undefined') {
 // =======================================================
 // REAL-WORLD BLOCKCHAIN HANDSHAKE & TELEMETRY LOGIC
 // =======================================================
-// Defined globally immediately so the button always finds it!
-window.executeVerification = function() {
-    console.log("Wallet payment handshake initiated...");
 
-    // Timing check: If Pi wasn't ready at startup, try initializing it now
-    if (typeof Pi === 'undefined') {
-        console.error("Critical: Pi SDK is still not loaded or defined!");
-        alert("SDK Loading error: Please wait a moment and try again.");
+window.executeVerification = function() {
+    alert("Tap registered! Running handler...");
+
+    // Check if the Pi engine is completely ready
+    if (!Pi || typeof Pi.createPayment !== 'function') {
+        alert("SDK Engine initializing. Please wait 3 seconds and tap again.");
         return;
     }
 
-    // Grab UI elements for feedback states dynamically when clicked
-    const button = document.querySelector('.verify-btn') || document.querySelector('button'); 
-    const card = document.querySelector('.task-card') || document.querySelector('[data-task-id]');
-
+    console.log("Launching wallet pop-up...");
     // Initiate Official Pi Blockchain Payment Request Matrix
     Pi.createPayment({
         amount: 0.50, // 🎯 Matches the exact task value shown on your terminal dashboard
