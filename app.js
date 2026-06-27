@@ -109,34 +109,35 @@ if (isPiBrowserEngine) {
     }
 }
 // 🔴 THE AUTO-CLEAN PROTOCOL: Cancels stuck ledger sessions automatically
-function onIncompletePaymentFound(payment) {
-    console.log("Incomplete payment detected:", payment.identifier);
+//function onIncompletePaymentFound(payment) {
+   // console.log("Incomplete payment detected:", payment.identifier);
     
     // Safely extract the txid if it exists, otherwise default to an empty string
-    const transactionId = payment.transaction?.txid || "";
+    //const transactionId = payment.transaction?.txid || "";
 
     // Instantly forward to your fresh Vercel serverless function to resolve
-    fetch('/api/approve-payment', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            action: "complete",
-            paymentId: payment.identifier,
-            txid: transactionId
-        })
-    })
-    .then(response => response.json())
-    .then(result => {
-        console.log("Server response for incomplete payment:", result);
+    //fetch('/api/approve-payment', {
+      //  method: 'POST',
+        //headers: {
+          //  'Content-Type': 'application/json'
+        //},
+       // body: JSON.stringify({
+         //   action: "complete",
+           // paymentId: payment.identifier,
+            //txid: transactionId
+        //})
+   // })
+    //.then(response => response.json())
+    //.then(result => {
+        //console.log("Server response for incomplete payment:", result);
         // Clear the screen and reset the terminal UI cleanly
-        window.location.reload();
-    })
-    .catch(err => {
-        console.error("Failed to transmit auto-clear payload:", err);
-    });
-}
+      //  window.location.reload();
+    //})
+    //.catch(err => {
+    //    console.error("Failed to transmit auto-clear payload:", err);
+  //  });
+//} 
+
 // =======================================================
 // 2. SECURE LOGISTIC GATEWAY AUTH HANDLER
 // =======================================================
