@@ -13,7 +13,7 @@
     },
     {
       "source": "/api/approve-payment",
-      "destination": "/api/approve-payment.js"
+      "destination": "/api/approve-payment.mjs"
     }
   ]
 }

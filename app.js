@@ -162,7 +162,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         console.log(`[Pi-DLV SDK] Sandbox login verified: ${onScopesGranted.user.username}`);
                         unlockOperationalDashboard();
                     }, (onAuthError) => {
-                        clearTimeout(authBypassTimeout);
+                       clearTimeout(authBypassTimeout);
                         console.error("[Pi-DLV SDK] Sandbox auth failed, engaging fallback:", onAuthError);
                         unlockOperationalDashboard();
                     });
