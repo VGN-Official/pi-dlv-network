@@ -345,111 +345,115 @@ const MOCK_GIGS_DATABASE = {
 
 // =======================================================
 // 6. REAL-WORLD BLOCKCHAIN HANDSHAKE & TELEMETRY LOGIC
-// =======================================================
-function executeVerification(gigId, payout) {
-    // 1. Alert user about the security stake requirement
-    alert(`To execute validation for ${gigId}, a security stake of 0.1 Test-Pi is required.\nThis stake will be held in escrow until verification is confirmed.`);
+// ======================================================
+// Force the function to be globally visible to the native Pi Browser Wallet engine
+window.executeVerification = function() {
+    console.log("Wallet payment handshake initiated...");
 
-    // 2. Locate UI elements to handle visual terminal states
-    const card = document.getElementById(`card-${gigId}`);
-    const button = document.getElementById(`btn-${gigId}`);
-    
-   // 3. Initiate Official Pi Blockchain Payment Request Matrix
-Pi.createPayment({
-    amount: 0.50, // 🎯 Matches the exact task value shown on your terminal dashboard
-    memo: "Verification for Yandoka Road Intersection Check", // 🎯 Descriptive memo format
-    metadata: { taskId: "TASK-YANDOKA-01", type: "verification_stake" }, // 🎯 Structured backend task ID
-    uid: "operator-test-session-node-" + Date.now() // 🔴 Unique timestamp string prevents blockchain duplication locks
-}, {
-    onReadyForServerApproval: function(paymentId) {
-        console.log("Payment created! ID:", paymentId);
-        
-        // Immediately engage visual feedback loading state
-        if (button) {
-            button.innerText = "🔄 LOGGING TELEMETRY...";
-            button.disabled = true;
-        }
+    // Grab UI elements for feedback states dynamically when clicked
+    const button = document.querySelector('.verify-btn') || document.querySelector('button'); 
+    const card = document.querySelector('.task-card') || document.querySelector('[data-task-id]');
 
-        // 🎯 Use relative routing pathing to prevent cross-origin iframe security blocks
-        fetch('/api/approve-payment', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ paymentId: paymentId })
-        })
-        .then(res => res.json())
-        .then(data => {
-            console.log("Backend verification acknowledged:", data);
-        })
-        .catch(err => {
-            console.error("Network routing error:", err);
-        });
-    },
-
-    onReadyForServerCompletion: function(paymentId, txid) {
-        console.log("Transaction hit the blockchain! TXID:", txid);
-        
-        // 🎯 Route directly to your absolute serverless complete handler
-        fetch('/api/complete-payment', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ paymentId: paymentId, txid: txid })
-        })
-        .then(res => {
-            if (!res.ok) throw new Error("Server completion failed");
-            return res.json();
-        })
-        .then(() => {
-            // Execute smooth terminal card fade-out animations seamlessly
-            if (card) {
-                card.style.opacity = "0.3";
-                card.style.transform = "scale(0.98)";
-                setTimeout(() => card.remove(), 400);
-            }
-
-            // Update Verified Gigs Count Element
-            const verifiedDisplay = document.getElementById('statsVerifiedCount'); 
-            if (verifiedDisplay) {
-                let currentGigs = parseInt(verifiedDisplay.innerText) || 0;
-                verifiedDisplay.innerText = currentGigs + 1;
-            }
-
-            // Update Pi Escrow Total Card Element via clean regex extraction
-            const escrowDisplay = document.getElementById('statsPiEarned');
-            if (escrowDisplay) {
-                let currentEscrow = parseFloat(escrowDisplay.innerText.replace(/[^\d.]/g, '')) || 0;
-                let plannedPayout = 0.50;
-                let newTotal = currentEscrow + plannedPayout;
-                escrowDisplay.innerText = `${newTotal.toFixed(2)} π`;
-            }
+    // 1. Initiate Official Pi Blockchain Payment Request Matrix
+    Pi.createPayment({
+        amount: 0.50, // 🎯 Matches the exact task value shown on your terminal dashboard
+        memo: "Verification for Yandoka Road Intersection Check", // 🎯 Descriptive memo format
+        metadata: { taskId: "TASK-YANDOKA-01", type: "verification_stake" }, // 🎯 Structured backend task ID
+        uid: "operator-test-session-node-" + Date.now() // 🔴 Unique timestamp prevents duplication locks
+    }, {
+        onReadyForServerApproval: function(paymentId) {
+            console.log("Payment created! ID:", paymentId);
             
-            alert(`🔒 Telemetry Matrix Locked!\nTask completed successfully on blockchain sandbox ledger.\nTXID: ${txid.substring(0, 12)}...`);
-        })
-        .catch(err => {
-            console.error("Completion endpoint error:", err);
-            alert("Payment recorded on ledger, but failed final server validation handshake.");
-        });
-    },
+            // Immediately engage visual feedback loading state
+            if (button) {
+                button.innerText = "🔄 LOGGING TELEMETRY...";
+                button.disabled = true;
+            }
 
-    onCancel: function(paymentId) {
-        alert("Verification canceled by operator.");
-        // Restore button usability if wallet sheet is dismissed
-        if (button) {
-            button.innerText = "Verify Data";
-            button.disabled = false;
-        }
-    },
+            // 🎯 Use relative routing pathing to prevent cross-origin iframe security blocks
+            fetch('/api/approve-payment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ paymentId: paymentId })
+            })
+            .then(res => res.json())
+            .then(data => {
+                console.log("Backend verification acknowledged:", data);
+            })
+            .catch(err => {
+                console.error("Network routing error:", err);
+            });
+        },
 
-    onError: function(error, payment) {
-        console.error("Pi Payment Error:", error);
-        alert("Terminal Sync Error: Blockchain payment failed.");
-        // Restore button usability on error event
-        if (button) {
-            button.innerText = "Verify Data";
-            button.disabled = false;
+        onPaymentConfirmed: function(paymentId, txid) {
+            console.log("Transaction hit the blockchain! TXID:", txid);
+            
+            // 🎯 Route directly to your absolute serverless complete handler
+            fetch('/api/approve-payment', { // Maps cleanly to your vercel.json rewrite route
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    action: "complete", // Tells your script to finish the handshake
+                    paymentId: paymentId, 
+                    txid: txid 
+                })
+            })
+            .then(res => {
+                if (!res.ok) throw new Error("Server completion failed");
+                return res.json();
+            })
+            .then(() => {
+                // Execute smooth terminal card fade-out animations seamlessly
+                if (card) {
+                    card.style.opacity = "0.3";
+                    card.style.transform = "scale(0.98)";
+                    setTimeout(() => card.remove(), 400);
+                }
+
+                // Update Verified Gigs Count Element
+                const verifiedDisplay = document.getElementById('statsVerifiedCount'); 
+                if (verifiedDisplay) {
+                    let currentGigs = parseInt(verifiedDisplay.innerText) || 0;
+                    verifiedDisplay.innerText = currentGigs + 1;
+                }
+
+                // Update Pi Escrow Total Card Element via clean regex extraction
+                const escrowDisplay = document.getElementById('statsPiEarned');
+                if (escrowDisplay) {
+                    let currentEscrow = parseFloat(escrowDisplay.innerText.replace(/[^\d.]/g, '')) || 0;
+                    let plannedPayout = 0.50;
+                    let newTotal = currentEscrow + plannedPayout;
+                    escrowDisplay.innerText = `${newTotal.toFixed(2)} π`;
+                }
+                
+                alert(`🔒 Telemetry Matrix Locked!\nTask completed successfully on blockchain sandbox ledger.\nTXID: ${txid.substring(0, 12)}...`);
+            })
+            .catch(err => {
+                console.error("Completion endpoint error:", err);
+                alert("Payment recorded on ledger, but failed final server validation handshake.");
+            });
+        },
+
+        onCancel: function(paymentId) {
+            alert("Verification canceled by operator.");
+            // Restore button usability if wallet sheet is dismissed
+            if (button) {
+                button.innerText = "Verify Data";
+                button.disabled = false;
+            }
+        },
+
+        onError: function(error, payment) {
+            console.error("Pi Payment Error:", error);
+            alert("Terminal Sync Error: Blockchain payment failed.");
+            // Restore button usability on error event
+            if (button) {
+                button.innerText = "Verify Data";
+                button.disabled = false;
+            }
         }
-    }
-});
-}
+    });
+};
 // =======================================================
 // 7. BLOCKCHAIN NETWORK TRANSACTION PROMPT
 // =======================================================
