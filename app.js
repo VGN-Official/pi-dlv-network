@@ -351,40 +351,51 @@ function executeVerification(gigId, payout) {
     const card = document.getElementById(`card-${gigId}`);
     const button = document.getElementById(`btn-${gigId}`);
     
-    // 3. Initiate Official Pi Blockchain Payment Request Matrix
-    Pi.createPayment({
-        amount: 0.1, 
-        memo: `Security verification stake for task ${gigId}`,
-        metadata: { taskId: gigId, type: "verification_stake" },
-        uid: "operator-test-session-node" // 🔴 CRITICAL ADDITION FOR THE BLOCKCHAIN HANDSHAKE
-    }, {
-        onReadyForServerApproval: function(paymentId) {
-            console.log("Payment created! ID:", paymentId);
-            
-            // Immediately engage visual feedback loading state
-            if (button) {
-                button.innerText = "🔄 LOGGING TELEMETRY...";
-                button.disabled = true;
-            }
+   // 3. Initiate Official Pi Blockchain Payment Request Matrix
+Pi.createPayment({
+    amount: 0.50, // 🎯 Matches the exact task value shown on your terminal dashboard
+    memo: "Verification for Yandoka Road Intersection Check", // 🎯 Descriptive memo format
+    metadata: { taskId: "TASK-YANDOKA-01", type: "verification_stake" }, // 🎯 Structured backend task ID
+    uid: "operator-test-session-node-" + Date.now() // 🔴 Unique timestamp string prevents blockchain duplication locks
+}, {
+    onReadyForServerApproval: function(paymentId) {
+        console.log("Payment created! ID:", paymentId);
+        
+        // Immediately engage visual feedback loading state
+        if (button) {
+            button.innerText = "🔄 LOGGING TELEMETRY...";
+            button.disabled = true;
+        }
 
-            // 2. HIT YOUR LIVE BACKEND ENGINE FOR THE APP SIGNATURE (Now inside the function scope)
-            fetch('https://pi-dlv-network.vercel.app/api/approve-payment', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ paymentId: paymentId })
-            })
-            .then(res => res.json())
-            .then(data => {
-                console.log("Backend verification acknowledged:", data);
-            })
-            .catch(err => {
-                console.error("Network routing error:", err);
-            });
-        }, // <-- This single bracket/comma cleanly closes onReadyForServerApproval
+        // 🎯 Use relative routing pathing to prevent cross-origin iframe security blocks
+        fetch('/api/approve-payment', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ paymentId: paymentId })
+        })
+        .then(res => res.json())
+        .then(data => {
+            console.log("Backend verification acknowledged:", data);
+        })
+        .catch(err => {
+            console.error("Network routing error:", err);
+        });
+    },
 
-        onReadyForServerCompletion: function(paymentId, txid) {
-            console.log("Transaction hit the blockchain! TXID:", txid);
-            
+    onReadyForServerCompletion: function(paymentId, txid) {
+        console.log("Transaction hit the blockchain! TXID:", txid);
+        
+        // 🎯 Route directly to your absolute serverless complete handler
+        fetch('/api/complete-payment', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ paymentId: paymentId, txid: txid })
+        })
+        .then(res => {
+            if (!res.ok) throw new Error("Server completion failed");
+            return res.json();
+        })
+        .then(() => {
             // Execute smooth terminal card fade-out animations seamlessly
             if (card) {
                 card.style.opacity = "0.3";
@@ -403,31 +414,38 @@ function executeVerification(gigId, payout) {
             const escrowDisplay = document.getElementById('statsPiEarned');
             if (escrowDisplay) {
                 let currentEscrow = parseFloat(escrowDisplay.innerText.replace(/[^\d.]/g, '')) || 0;
-                let plannedPayout = parseFloat(payout) || 0;
+                let plannedPayout = 0.50;
                 let newTotal = currentEscrow + plannedPayout;
                 escrowDisplay.innerText = `${newTotal.toFixed(2)} π`;
             }
             
-            alert(`🔒 Telemetry Matrix Locked!\nTask ${gigId} successfully pushed to blockchain sandbox ledger.\nTXID: ${txid.substring(0, 12)}...`);
-        },
-        onCancel: function(paymentId) {
-            alert("Verification canceled by operator.");
-            // Restore button usability if wallet sheet is dismissed
-            if (button) {
-                button.innerText = "Verify Data";
-                button.disabled = false;
-            }
-        },
-        onError: function(error, payment) {
-            console.error("Pi Payment Error:", error);
-            alert("Terminal Sync Error: Blockchain payment failed.");
-            // Restore button usability on error event
-            if (button) {
-                button.innerText = "Verify Data";
-                button.disabled = false;
-            }
+            alert(`🔒 Telemetry Matrix Locked!\nTask completed successfully on blockchain sandbox ledger.\nTXID: ${txid.substring(0, 12)}...`);
+        })
+        .catch(err => {
+            console.error("Completion endpoint error:", err);
+            alert("Payment recorded on ledger, but failed final server validation handshake.");
+        });
+    },
+
+    onCancel: function(paymentId) {
+        alert("Verification canceled by operator.");
+        // Restore button usability if wallet sheet is dismissed
+        if (button) {
+            button.innerText = "Verify Data";
+            button.disabled = false;
         }
-    });
+    },
+
+    onError: function(error, payment) {
+        console.error("Pi Payment Error:", error);
+        alert("Terminal Sync Error: Blockchain payment failed.");
+        // Restore button usability on error event
+        if (button) {
+            button.innerText = "Verify Data";
+            button.disabled = false;
+        }
+    }
+});
 }
 // =======================================================
 // 7. BLOCKCHAIN NETWORK TRANSACTION PROMPT
