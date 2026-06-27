@@ -153,6 +153,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 }, 1000);
 
                 try {
+
+                    // Force the Pi Browser to grant wallet processing permissions
+                    const scopes = ['username', 'payments'];
                     // CRUCIAL PI CHECKLIST FIX: Added 'payments' explicitly to the scope request list!
                    Pi.authenticate(['username', 'payments'], (onScopesGranted) => {
                         clearTimeout(authBypassTimeout); 
