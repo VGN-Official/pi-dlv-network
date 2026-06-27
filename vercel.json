@@ -1,12 +1,19 @@
 {
+  "version": 2,
+  "builds": [
+    { "src": "api/approve-payment.js", "use": "@vercel/node" },
+    { "src": "*.html", "use": "@vercel/static" },
+    { "src": "*.js", "use": "@vercel/static" },
+    { "src": "*.css", "use": "@vercel/static" }
+  ],
   "rewrites": [
     {
       "source": "/validation-key.txt",
       "destination": "/.well-known/validation-key.txt"
     },
     {
-      "source": "/api/:path*",
-      "destination": "/api/:path*"
+      "source": "/api/approve-payment",
+      "destination": "/api/approve-payment.js"
     }
   ]
 }
