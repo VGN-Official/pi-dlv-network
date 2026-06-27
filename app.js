@@ -112,29 +112,40 @@ if (isPiBrowserEngine) {
 function onIncompletePaymentFound(payment) {
     console.log("Stale/Incomplete ledger session detected:", payment.identifier);
     
-    // 🎯 FIX 1: Explicitly target your live development backend URL
-    const BACKEND_URL = "https://dev-pi-dlv-network.vercel.app"; 
+    // 1. Force check the exact payment structure
+    const paymentId = payment.identifier;
+    const txid = (payment.transaction && payment.transaction.txid) ? payment.transaction.txid : null;
 
-    // Safe fallback if payment object structure varies slightly
-    const txid = (payment.transaction && payment.transaction.txid) ? payment.transaction.txid : "mock_sandbox_txid";
+    if (!txid) {
+        console.error("Critical error: No blockchain transaction hash found to complete.");
+        alert("Found an incomplete request initialization, but no blockchain signature exists yet. Check your developer portal app settings.");
+        return;
+    }
 
-    fetch(`${BACKEND_URL}/api/approve-payment`, {
+    // 2. Direct hit to your backend bypass router
+    fetch("https://dev-pi-dlv-network.vercel.app/api/approve-payment", {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-            action: "complete", // 🎯 FIX 2: Explicitly tell your Vercel backend to run the /complete handshake
-            paymentId: payment.identifier,
+            action: "complete", // Tells backend logic to invoke the /v2/payments/:paymentId/complete endpoint
+            paymentId: paymentId,
             txid: txid
         })
     })
-    .then(res => res.json())
+    .then(res => {
+        if (!res.ok) throw new Error(`Backend server responded with status: ${res.status}`);
+        return res.json();
+    })
     .then(data => {
-        console.log("Vercel Backend response:", data);
-        // 🎯 FIX 3: Alert and reload to clear the "Pending Payment" popup instantly!
-        alert("Stuck payment processing complete! Refreshing your terminal console...");
+        console.log("Vercel Backend execution success:", data);
+        alert("🎉 SUCCESS! The stuck blockchain payment has been verified and settled on VGN server! Your account is unfrozen.");
         window.location.reload();
     })
-    .catch(err => console.error("Error communicating with Vercel:", err));
+    .catch(err => {
+        console.error("Handshake fail:", err);
+        // 🎯 EMERGENCY ACTION: Display the error visually on your phone screen since Vercel logs are blank!
+        alert(`Handshake Error: ${err.message}. Ensure your Vercel Environment variables have the correct Server API Key matching your new developer portal profile!`);
+    });
 }
 // =======================================================
 // 2. SECURE LOGISTIC GATEWAY AUTH HANDLER
