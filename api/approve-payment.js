@@ -15,7 +15,7 @@ export default async function handler(req, res) {
     }
 
     const { paymentId, txid } = req.body; // <-- Extract txid forwarded by the client
-    const PI_API_KEY = process.env.PI_API_KEY;
+    const apikey = "il1sumqryiuqvlypyvn2l3bifgw4xqxybtrusjysxkgxsrh1v393q2ld29dww9y4";
 
     if (!paymentId) {
         return res.status(400).json({ error: "Missing parameter: paymentId" });
@@ -31,7 +31,7 @@ export default async function handler(req, res) {
         console.log(`[Vercel Serverless] Handling stuck ledger path via /${endpoint} for ID: ${paymentId}`);
 
         const response = await axios.post(
-            `https://api.minepi.com/v2/payments/${paymentId}/${endpoint}`,
+            `https://api.platform.minepi.com/v2/payments/${paymentId}/${endpoint}`,
             postData,
             {
                 headers: {
