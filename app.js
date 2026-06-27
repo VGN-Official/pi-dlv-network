@@ -338,7 +338,7 @@ const MOCK_GIGS_DATABASE = {
                 <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #2a2a2a; padding-top: 12px;">
                     <div style="font-size: 0.8em; color: #aaa; font-family: sans-serif;">${proximityLabel}</div>
                     
-                    <button id="btn-${gig.id}" onclick="window.executeVerification()" ${actionButtonState} style="padding: 8px 16px; border: none; border-radius: 4px; font-weight: bold; font-size: 0.8em; text-transform: uppercase;">
+                   <button id="btn-${gig.id}" onclick="alert('Tap registered! Running handler...'); window.executeVerification();" style="padding: 8px 16px; border: none; border-radius: 4px; font-weight: bold; font-size: 0.8em; text-transform: uppercase; background-color: #388E3C; color: white; position: relative; z-index: 99999; pointer-events: auto;">
                         ${userLat === null ? "Awaiting GPS" : (proximityLabel.includes("At Destination") ? "Verify Data" : "Move Closer")}
                     </button>
                     
