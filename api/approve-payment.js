@@ -15,7 +15,7 @@ export default async function handler(req, res) {
     }
 
     const { paymentId, txid } = req.body; // <-- Extract txid forwarded by the client
-    const apikey = "il1sumqryiuqvlypyvn2l3bifgw4xqxybtrusjysxkgxsrh1v393q2ld29dww9y4";
+    const apikey = "elxmo3sqnogqovzsgmwu95s4j7ne4x9q8hxszi7fihfkgncokrvgbzv0aw2uszhw";
 
     if (!paymentId) {
         return res.status(400).json({ error: "Missing parameter: paymentId" });
