@@ -36,7 +36,7 @@ export default async function handler(req, res) {
             {
                 headers: {
                     // FIX: Changed 'Key' to 'Bearer' so the Pi API authenticates securely
-                    Authorization: `Bearer ${PI_API_KEY}`,
+                    Authorization: `Key ${apikey}`,
                     'Content-Type': 'application/json'
                 }
             }
