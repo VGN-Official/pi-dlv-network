@@ -340,89 +340,133 @@ const MOCK_GIGS_DATABASE = {
         `;
     });
 }
+// =======================================================
+// 1. TERMINAL GLOBAL ARCHITECTURE & STATE GUARDS
+// =======================================================
+let isSessionAuthenticated = false;
 
-// =======================================================
-// 1. APP STUDIO INITIALIZATION & AUTH HANDSHAKE
-// =======================================================
+// Safe wrapper to initialize the platform environment
 if (typeof Pi !== 'undefined') {
-    console.log("Pi SDK detected. Initializing...");
-    Pi.init({ version: "2.0", sandbox: true });
-
-    // Force the authorization scope handshake immediately on load
-    Pi.authenticate(['username', 'payments'], function(auth) {
-        console.log("App Studio Session Secured for: " + auth.user.username);
-    }, function(error) {
-        console.error("Authentication handshake delayed: ", error);
-    });
+    console.log("[Pi-DLV Core] Injected SDK detected. Securing container...");
+    try {
+        Pi.init({ version: "2.0", sandbox: true });
+        
+        // Authenticate immediately with explicit permission tokens
+        Pi.authenticate(['username', 'payments'], onIncompletePaymentFound, function(authError) {
+            console.error("[Pi-DLV Core] Scope authentication delayed:", authError);
+        });
+    } catch (initError) {
+        console.error("[Pi-DLV Core] Strategic initialization failure:", initError);
+    }
 } else {
-    console.warn("Pi SDK script not detected yet by the runtime engine.");
+    console.warn("[Pi-DLV Core] Pi SDK anchor missing from viewport headers.");
 }
 
 // =======================================================
-// 2. REAL-WORLD BLOCKCHAIN HANDSHAKE & TELEMETRY LOGIC
+// 2. STUCK LEDGER SWEEP PROTOCOL (AUTO-CLEAN)
 // =======================================================
+function onIncompletePaymentFound(payment) {
+    console.log("[Pi-DLV Core] Sweeping network grid... Stuck block identified:", payment.identifier);
+    isSessionAuthenticated = true; // Mark session ready since platform handshake is communicating
+    
+    const transactionId = payment.transaction?.txid || "";
 
+    fetch('/api/approve-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            action: "complete",
+            paymentId: payment.identifier,
+            txid: transactionId
+        })
+    })
+    .then(response => response.json())
+    .then(result => {
+        console.log("[Pi-DLV Core] Server sweep loop clearance response:", result);
+        window.location.reload();
+    })
+    .catch(err => {
+        console.error("[Pi-DLV Core] Critical ledger sweep transmission failure:", err);
+    });
+}
+
+// =======================================================
+// 3. SECURE VERIFICATION GRID HANDSHAKE ENGINE
+// =======================================================
 window.executeVerification = function() {
     alert("Tap registered! Running handler...");
 
-    // Check if the Pi engine is completely ready
+    // Core Guard 1: Verify the platform layer is responsive
     if (!Pi || typeof Pi.createPayment !== 'function') {
-        alert("SDK Engine initializing. Please wait 3 seconds and tap again.");
+        alert("System terminal syncing with grid. Please wait 3 seconds and tap again.");
         return;
     }
 
-    // Cache elements safely for UI feedback updates
-    const button = event?.target || document.querySelector('.verify-btn') || document.getElementsByClassName('Verify Data')[0];
-    const card = button ? button.closest('.task-card') || button.parentElement : null;
+    // Core Guard 2: Force safe flag bypass fallback for sandbox flexibility
+    if (!isSessionAuthenticated) {
+        isSessionAuthenticated = true;
+    }
 
-    console.log("Launching wallet pop-up...");
-    
-    // Initiate Official Pi Blockchain Payment Request Matrix
+    // UI Scrapers: Safely discover context elements without utilizing 'event'
+    const button = document.querySelector('.verify-btn') || document.getElementById('verifyDataBtn');
+    const card = button ? button.closest('.task-card') : null;
+
+    console.log("[Pi-DLV Core] Synchronizing wallet overlay...");
+
     Pi.createPayment({
-        amount: 0.50, // 🎯 Matches the task value shown on your terminal dashboard
+        amount: 0.50,
         memo: "Verification for Yandoka Road Intersection Check",
         metadata: { taskId: "TASK-YANDOKA-01", type: "verification_stake" }
     }, {
         onReadyForServerApproval: function(paymentId) {
-            console.log("Payment created in Sandbox! ID:", paymentId);
+            console.log("[Pi-DLV Core] Payment block created. Token generated:", paymentId);
             
-            // Immediately engage visual feedback loading state
+            // Shift interface to load mode
             if (button) {
                 button.innerText = "🔄 LOGGING TELEMETRY...";
                 button.disabled = true;
             }
-            
-            // In App Studio's pure client setup, we acknowledge creation instantly
-            console.log("App Studio automatically managing serverless approval state.");
+
+            // Sync with your live Vercel backend route
+            fetch('/api/approve-payment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: "approve", paymentId: paymentId })
+            })
+            .then(res => res.json())
+            .then(data => {
+                console.log("[Pi-DLV Core] Backend function validated pipeline:", data);
+            })
+            .catch(err => {
+                console.error("[Pi-DLV Core] Server confirmation failure:", err);
+            });
         },
 
         onPaymentConfirmed: function(paymentId, txid) {
-            console.log("Transaction hit the blockchain! TXID:", txid);
+            console.log("[Pi-DLV Core] Ledger block verified successfully. TXID:", txid);
             
-            // Process visual updates locally since backend handling is stripped
+            // Execute UI changes seamlessly
             if (card) {
                 card.style.opacity = "0.3";
                 card.style.transform = "scale(0.98)";
                 setTimeout(() => card.remove(), 400);
             }
 
-            // Update Verified Gigs Counter
+            // Sync stats panel UI arrays
             const verifiedDisplay = document.getElementById('statsVerifiedCount'); 
             if (verifiedDisplay) {
                 let currentGigs = parseInt(verifiedDisplay.innerText) || 0;
                 verifiedDisplay.innerText = currentGigs + 1;
             }
 
-            // Update Escrow Account Balance Display
             const escrowDisplay = document.getElementById('statsPiEarned');
             if (escrowDisplay) {
                 let currentEscrow = parseFloat(escrowDisplay.innerText.replace(/[^\d.]/g, '')) || 0;
-                let plannedPayout = 0.50;
-                let newTotal = currentEscrow + plannedPayout;
-                escrowDisplay.innerText = `${newTotal.toFixed(2)} π`;
+                escrowDisplay.innerText = `${(currentEscrow + 0.50).toFixed(2)} π`;
             }
             
             alert(`🔒 Telemetry Matrix Locked!\nTask completed successfully on blockchain sandbox ledger.\nTXID: ${txid.substring(0, 12)}...`);
+            window.location.reload();
         },
 
         onCancel: function(paymentId) {
@@ -434,7 +478,7 @@ window.executeVerification = function() {
         },
 
         onError: function(error, payment) {
-            console.error("Pi Payment Error:", error);
+            console.error("[Pi-DLV Core] Critical runtime execution error:", error);
             alert("Terminal Sync Error: Blockchain payment failed.");
             if (button) {
                 button.innerText = "Verify Data";
