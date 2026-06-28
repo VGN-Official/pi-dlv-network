@@ -287,41 +287,68 @@ function seedLocalVerificationGigs(localeSlug, userLat = null, userLon = null) {
 // 6. REAL-WORLD BLOCKCHAIN HANDSHAKE & TELEMETRY LOGIC
 // =======================================================
 window.executeVerification = function(event, gigId, payout, gigTitle) {
-    console.log(`Handshake caught for Gig ID: ${gigId} (${gigTitle})`);
+    console.log("Handshake caught. Parsing variables cleanly...");
 
-    if (!Pi || typeof Pi.createPayment !== 'function') {
-        alert("SDK Engine initializing. Please wait 3 seconds and tap again.");
+    // 1. Guard against uninitialized Pi engine
+    if (typeof Pi === 'undefined' || !Pi.createPayment) {
+        alert("Syncing with node telemetry. Please wait 3 seconds and tap again.");
         return;
     }
 
-    const button = event?.target || document.getElementById(`btn-${taskId}`);
+    // 2. Identify the dynamic button and card UI elements safely
+    const button = event?.target || document.getElementById(`btn-${gigId}`);
     const card = button ? button.closest('.task-card') : null;
 
-    console.log(`Launching wallet pop-up for transaction validation...`);
-    
+    // 3. Clean and parse your dynamic input payload parameters
+    const cleanAmount = parseFloat(payout) || 0.50; 
+
+    console.log(`Launching secure wallet container for ${cleanAmount} π...`);
+
     Pi.createPayment({
-        amount: taskPayout, 
-        memo: `Verification for ${taskTitle}`,
-        metadata: { taskId: taskId, type: "verification_stake" }
+        amount: cleanAmount, 
+        memo: `Verification for ${gigTitle}`,
+        metadata: { 
+            gigId: gigId, 
+            type: "verification_stake",
+            compact: "Bauchi-Central-Grid"
+        }
     }, {
         onReadyForServerApproval: function(paymentId) {
             console.log("Payment created in Sandbox! ID:", paymentId);
+            
+            // Lock down the button interface instantly so the operator doesn't double-click
             if (button) {
                 button.innerText = "🔄 LOGGING TELEMETRY...";
                 button.disabled = true;
             }
-            console.log("App Studio automatically managing serverless approval state.");
+
+            // Sync securely with your active Vercel serverless function background engine
+            fetch('/api/approve-payment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    action: "approve", 
+                    paymentId: paymentId, 
+                    gigId: gigId 
+                })
+            })
+            .then(res => res.json())
+            .then(data => console.log("Backend server verification match:", data))
+            .catch(err => console.error("Backend validation timeout:", err));
         },
 
-        onPaymentConfirmed: function(paymentId, txid) {
+        onPaymentConfirmed: function(txid) {
             console.log("Transaction hit the blockchain! TXID:", txid);
             
-           if (card) {
+            // Cleanly slide out the task item from the UI layout grid
+            if (card) {
                 card.style.opacity = "0.3";
                 card.style.transform = "scale(0.98)";
                 setTimeout(() => card.remove(), 400);
             }
-           const verifiedDisplay = document.getElementById('statsVerifiedCount'); 
+
+            // Instantly tick up the dashboard telemetry display counters
+            const verifiedDisplay = document.getElementById('statsVerifiedCount'); 
             if (verifiedDisplay) {
                 let currentGigs = parseInt(verifiedDisplay.innerText) || 0;
                 verifiedDisplay.innerText = currentGigs + 1;
@@ -330,14 +357,16 @@ window.executeVerification = function(event, gigId, payout, gigTitle) {
             const escrowDisplay = document.getElementById('statsPiEarned');
             if (escrowDisplay) {
                 let currentEscrow = parseFloat(escrowDisplay.innerText.replace(/[^\d.]/g, '')) || 0;
-                let newTotal = currentEscrow + taskPayout;
+                let newTotal = currentEscrow + cleanAmount;
                 escrowDisplay.innerText = `${newTotal.toFixed(2)} π`;
             }
-                        alert(`🔒 Telemetry Matrix Locked!\nTask completed successfully on blockchain sandbox ledger.\nTXID: ${txid.substring(0, 12)}...`);
+
+            alert(`🔒 Telemetry Matrix Locked!\nTask completed successfully on blockchain sandbox ledger.`);
+            window.location.reload();
         },
 
         onCancel: function(paymentId) {
-            alert("Verification canceled by operator.");
+            console.log("Cancelled:", paymentId);
             if (button) {
                 button.innerText = "Verify Data";
                 button.disabled = false;
@@ -345,7 +374,7 @@ window.executeVerification = function(event, gigId, payout, gigTitle) {
         },
 
         onError: function(error, payment) {
-            console.error("Pi Payment Error:", error);
+            console.error("Wallet core failure:", error);
             alert("Terminal Sync Error: Blockchain payment failed.");
             if (button) {
                 button.innerText = "Verify Data";
