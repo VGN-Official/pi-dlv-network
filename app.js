@@ -286,8 +286,8 @@ function seedLocalVerificationGigs(localeSlug, userLat = null, userLon = null) {
 // =======================================================
 // 6. REAL-WORLD BLOCKCHAIN HANDSHAKE & TELEMETRY LOGIC
 // =======================================================
-window.executeVerification = function(event, taskId, taskPayout, taskTitle) {
-    if (event) event.preventDefault();
+window.executeVerification = function(event, gigId, payout, gigTitle) {
+    console.log(`Handshake caught for Gig ID: ${gigId} (${gigTitle})`);
 
     if (!Pi || typeof Pi.createPayment !== 'function') {
         alert("SDK Engine initializing. Please wait 3 seconds and tap again.");
