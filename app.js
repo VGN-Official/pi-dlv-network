@@ -2,81 +2,18 @@
 // 🌐 GLOBAL OPERATIONAL HUBS CONFIGURATION MATRIX
 // =======================================================
 const GLOBAL_DLV_HUBS = [
-    {
-       hub_id: "HUB-LOS-01",
-        name: "Lagos Maritime & Logistics Hub",
-        target_lat: 6.4541,
-        target_lon: 3.3813,
-        radius_km: 30.0,
-        locale_slug: "lagos"
-    },
-    {
-        hub_id: "HUB-NG-BAU",
-        name: "Bauchi Central Grid",
-        country: "Nigeria",
-        target_lat: 10.3158,
-        target_lon: 9.8442,
-        radius_km: 50.0,
-        locale_slug: "bauchi_metropolitan"
-    },
-    {
-        hub_id: "HUB-NG-ABV",
-        name: "Abuja Federal Capital Grid",
-        country: "Nigeria",
-        target_lat: 9.0765,
-        target_lon: 7.3986,
-        radius_km: 40,
-        locale_slug: "abuja_metropolitan"
-    },
-    {
-        hub_id: "HUB-NG-KAN",
-        name: "Kano Commercial Grid Node",
-        country: "Nigeria",
-        target_lat: 12.0022,
-        target_lon: 8.5920,
-        radius_km: 35,
-        locale_slug: "kano_grid"
-    },
-    {
-        hub_id: "HUB-NG-PHC",
-        name: "Port Harcourt Industrial Hub",
-        country: "Nigeria",
-        target_lat: 4.8156,
-        target_lon: 7.0498,
-        radius_km: 40,
-        locale_slug: "phc_grid"
-    },
-    {
-        hub_id: "HUB-GH-ACC",
-        name: "Accra West-African Node",
-        country: "Ghana",
-        target_lat: 5.6037,
-        target_lon: -0.1870,
-        radius_km: 45,
-        locale_slug: "accra_grid"
-    },
-    {
-        hub_id: "HUB-UK-LON",
-        name: "London Greater Logistics Grid",
-        country: "United Kingdom",
-        target_lat: 51.5074,
-        target_lon: -0.1278,
-        radius_km: 40,
-        locale_slug: "london_transit"
-    },
-    {
-        hub_id: "HUB-ID-JKT",
-        name: "Jakarta Capital Grid",
-        country: "Indonesia",
-        target_lat: -6.2088,
-        target_lon: 106.8456,
-        radius_km: 35,
-        locale_slug: "jakarta_metropolitan"
-    }
+    { hub_id: "HUB-LOS-01", name: "Lagos Maritime & Logistics Hub", country: "Nigeria", target_lat: 6.4541, target_lon: 3.3813, radius_km: 30.0, locale_slug: "western_nigeria_grid" },
+    { hub_id: "HUB-NG-BAU", name: "Bauchi Central Grid", country: "Nigeria", target_lat: 10.3158, target_lon: 9.8442, radius_km: 50.0, locale_slug: "bauchi_metropolitan" },
+    { hub_id: "HUB-NG-ABV", name: "Abuja Federal Capital Grid", country: "Nigeria", target_lat: 9.0765, target_lon: 7.3986, radius_km: 40.0, locale_slug: "abuja_metropolitan" },
+    { hub_id: "HUB-NG-KAN", name: "Kano Commercial Grid Node", country: "Nigeria", target_lat: 12.0022, target_lon: 8.5920, radius_km: 35.0, locale_slug: "kano_grid" },
+    { hub_id: "HUB-NG-PHC", name: "Port Harcourt Industrial Hub", country: "Nigeria", target_lat: 4.8156, target_lon: 7.0498, radius_km: 40.0, locale_slug: "phc_grid" },
+    { hub_id: "HUB-GH-ACC", name: "Accra West-African Node", country: "Ghana", target_lat: 5.6037, target_lon: -0.1870, radius_km: 45.0, locale_slug: "accra_grid" },
+    { hub_id: "HUB-UK-LON", name: "London Greater Logistics Grid", country: "United Kingdom", target_lat: 51.5074, target_lon: -0.1278, radius_km: 40.0, locale_slug: "london_transit" },
+    { hub_id: "HUB-ID-JKT", name: "Jakarta Capital Grid", country: "Indonesia", target_lat: -6.2088, target_lon: 106.8456, radius_km: 35.0, locale_slug: "jakarta_metropolitan" }
 ];
 
 // 👤 GLOBAL STATE FOR TESTING FLOWS
-const currentPioneerUsername = "VGN_Operator_01";
+let currentPioneerUsername = "VGN_Operator_01";
 const isDevelopmentMode = true;
 const isPiBrowserEngine = (typeof Pi !== 'undefined');
 
@@ -87,46 +24,55 @@ window.onerror = function(message, source, lineno, colno, error) {
     }
     return false;
 };
+
 // =======================================================
 // 1. INITIALIZE PI ENGINE & AUTO-SWEEP PENDING BLOCKS
 // =======================================================
-try {
-    // Initialize the core platform wrapper
-    Pi.init({ version: "2.0", sandbox: true });
-    console.log("Pi SDK Core initiated successfully.");
-    
-    // Explicitly authenticate the session and lock in BOTH username and payments scopes
-    Pi.authenticate(['username', 'payments'], onIncompletePaymentFound)
-        .then(function(auth) {
-            console.log(`[Pi-DLV Core] Terminal session securely authenticated: ${auth.user.username}`);
-            // Fire your background tracking matrix safely if it exists
+if (isPiBrowserEngine) {
+    try {
+        Pi.init({ version: "2.0", sandbox: true });
+        console.log("[Pi-DLV Core] Pi SDK Matrix Initialized.");
+
+        // Handshake instantly on load to map user details safely
+        Pi.authenticate(['username', 'payments'], function(auth) {
+            console.log(`[Pi-DLV Core] Operator authenticated: ${auth.user.username}`);
+            currentPioneerUsername = auth.user.username;
             if (typeof initializeTrackingPipeline === "function") initializeTrackingPipeline(); 
-        })
-        .catch(function(authError) {
-            console.error("SDK Authorization failed to secure payment scope:", authError);
+        }, function(authError) {
+            console.error("[Pi-DLV Core] Pi Authentication mapping failed:", authError);
         });
 
-} catch (e) {
-    console.error("Critical failure during terminal bootstrap sequence:", e);
+    } catch (e) {
+        console.error("[Pi-DLV Core] SDK initialization error:", e);
+    }
+} else {
+    console.warn("[Pi-DLV Core] Pi SDK script not detected yet by the runtime engine.");
 }
 
-// Fallback function wrapper to handle stuck ledger state cleanups
+// 🔴 THE AUTO-CLEAN PROTOCOL: Active for sweeping incomplete ledger hooks
 function onIncompletePaymentFound(payment) {
-    console.log("Sweeping ledger... Incomplete transaction detected:", payment.identifier);
+    console.log("Incomplete payment detected on App Profile:", payment.identifier);
     const transactionId = payment.transaction?.txid || "";
-    
+
     fetch('/api/approve-payment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: "complete", paymentId: payment.identifier, txid: transactionId })
+        body: JSON.stringify({
+            action: "complete",
+            paymentId: payment.identifier,
+            txid: transactionId
+        })
     })
-    .then(res => res.json())
+    .then(response => response.json())
     .then(result => {
-        console.log("Server response for incomplete auto-sweep:", result);
+        console.log("Server sweep complete response:", result);
         window.location.reload();
     })
-    .catch(err => console.error("Auto-clear sweep failed:", err));
+    .catch(err => {
+        console.error("Transmission sweep failure:", err);
+    });
 }
+
 // =======================================================
 // 2. SECURE LOGISTIC GATEWAY AUTH HANDLER
 // =======================================================
@@ -138,24 +84,20 @@ document.addEventListener("DOMContentLoaded", () => {
             e.preventDefault();
             console.log("[Pi-DLV SDK] Initializing Secure Auth sequence...");
             
-            if (isPiBrowserEngine) {
-                // Set a 1-second safety timer to beat Sandbox iframe cross-origin freezes
+         if (isPiBrowserEngine) {
                 const authBypassTimeout = setTimeout(() => {
                     console.warn("[Pi-DLV SDK] Sandbox frame delay. Engaging Bypass...");
                     unlockOperationalDashboard();
                 }, 1000);
 
                 try {
-
-                    // Force the Pi Browser to grant wallet processing permissions
-                    const scopes = ['username', 'payments'];
-                    // CRUCIAL PI CHECKLIST FIX: Added 'payments' explicitly to the scope request list!
-                   Pi.authenticate(['username', 'payments'], (onScopesGranted) => {
+                    Pi.authenticate(['username', 'payments'], (auth) => {
                         clearTimeout(authBypassTimeout); 
-                        console.log(`[Pi-DLV SDK] Sandbox login verified: ${onScopesGranted.user.username}`);
+                        console.log(`[Pi-DLV SDK] Sandbox login verified: ${auth.user.username}`);
+                        currentPioneerUsername = auth.user.username;
                         unlockOperationalDashboard();
                     }, (onAuthError) => {
-                       clearTimeout(authBypassTimeout);
+                        clearTimeout(authBypassTimeout);
                         console.error("[Pi-DLV SDK] Sandbox auth failed, engaging fallback:", onAuthError);
                         unlockOperationalDashboard();
                     });
@@ -163,21 +105,20 @@ document.addEventListener("DOMContentLoaded", () => {
                     clearTimeout(authBypassTimeout);
                     console.warn("[Pi-DLV SDK] Caught cross-origin window block. Forcing transition.");
                     unlockOperationalDashboard();
-                }
-            } else {
-                // Local desktop development environment fallback (Live Server)
+             }
+           } else {
                 unlockOperationalDashboard();
             }
         });
     } else {
-        console.error("[Pi-DLV Target] Critical Error: Sign-in button element was not found in the DOM hierarchy.");
+        console.warn("[Pi-DLV Target] Sign-in button element deferred or not in layout hierarchy.");
     }
 });
 
 // =======================================================
 // 3. SECURE GEOLOCATION MATRIX LOGIC
 // =======================================================
-    function calculateDistance(lat1, lon1, lat2, lon2) {
+function calculateDistance(lat1, lon1, lat2, lon2) {
     const R = 6371; // Earth's radius in kilometers
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
@@ -189,7 +130,7 @@ document.addEventListener("DOMContentLoaded", () => {
     return R * c; 
 }
 
-    function routePioneerToHub(userLat, userLon) {
+function routePioneerToHub(userLat, userLon) {
     console.log(`[Pi-DLV Core] Analyzing coordinates: Lat ${userLat}, Lon ${userLon}`);
 
     const matchedHub = GLOBAL_DLV_HUBS.find(hub => {
@@ -222,16 +163,9 @@ function unlockOperationalDashboard() {
     if (gatewayLock && mainDashboard) {
         gatewayLock.style.display = "none";      
         mainDashboard.style.display = "block";    
-    }
+}
 
-   // TRIGGER BLOCKCHAIN TRANSACTION SAFELY
-//if (isPiBrowserEngine && window.navigator.userAgent.includes("PiBrowser")) {
-//runTestTransaction();
-//} else {
-  //  console.log("[System Core] Desktop browser environment active. Real blockchain payment deferred.");
-//}
-
- if (navigator.geolocation) {
+    if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
             (position) => {
                 const lat = position.coords.latitude;
@@ -246,14 +180,14 @@ function unlockOperationalDashboard() {
                         </div>
                     `;
                 }
-            seedLocalVerificationGigs(userHub.locale_slug, lat, lon);
-    },
+                seedLocalVerificationGigs(userHub.locale_slug, lat, lon);
+            },
             (error) => {
                 console.error("[Pi-DLV Core] Geolocation access denied or timed out:", error.message);
-                seedLocalVerificationGigs("bauchi_metropolitan");
+                seedLocalVerificationGigs("bauchi_metropolitan", 10.3180, 9.8460);
             }
         );
-} else {
+    } else {
         seedLocalVerificationGigs("global_roam");
     }
 }
@@ -285,8 +219,9 @@ const MOCK_GIGS_DATABASE = {
     "global_roam": [
         { id: "GIG-GLO-001", title: "Global Network Sync Check", desc: "Headless server node ping verification task for automated compliance tracking.", lat: 0.0000, lon: 0.0000, payout: 0.10 }
     ]
- };
-   function seedLocalVerificationGigs(localeSlug, userLat = null, userLon = null) {
+};
+
+function seedLocalVerificationGigs(localeSlug, userLat = null, userLon = null) {
     const container = document.getElementById('dlvGigsContainer');
     const countIndicator = document.getElementById('taskCountIndicator');
     
@@ -310,19 +245,19 @@ const MOCK_GIGS_DATABASE = {
         if (userLat !== null && userLon !== null) {
             const distanceKM = calculateDistance(userLat, userLon, gig.lat, gig.lon);
             
-            // Checks proximity boundaries cleanly
-            if (distanceKM <= 10000 || isDevelopmentMode) { 
+            if (distanceKM <= 0.1 || isDevelopmentMode) { 
                 proximityLabel = `🟢 <span style="color:#388E3C; font-weight:bold;">At Destination Matrix (Within 100m)</span>`;
-                // FIXED: Space added, variable pointers changed from 'task' to 'gig'
-                actionButtonState = `style="background: linear-gradient(135deg, #388E3C, #2E7D32); color: white; cursor: pointer;" onclick="executeVerification('${gig.id}', '${gig.payout}')"`;
+                actionButtonState = `style="background: linear-gradient(135deg, #388E3C, #2E7D32); color: white; cursor: pointer;"`;
             } else {
                 proximityLabel = `📍 Distance: <strong>${distanceKM.toFixed(2)} km</strong> away`;
                 actionButtonState = `disabled style="background: #2a2a2a; color: #cca01a; border: 1px solid #cca01a; opacity: 0.6; cursor: not-allowed;"`;
             }
         }
 
-       container.innerHTML += `
-            <div id="card-${gig.id}" style="background: #1a1a1a; padding: 18px; border-radius: 8px; border-left: 3px solid #cca01a; box-shadow: 0 4px 10px rgba(0,0,0,0.3); margin-bottom: 15px;">
+        const btnText = userLat === null ? "Awaiting GPS" : (proximityLabel.includes("At Destination") ? "Verify Data" : "Move Closer");
+
+        container.innerHTML += `
+            <div id="card-${gig.id}" class="task-card" style="background: #1a1a1a; padding: 18px; border-radius: 8px; border-left: 3px solid #cca01a; box-shadow: 0 4px 10px rgba(0,0,0,0.3); margin-bottom: 15px;">
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
                     <h4 style="margin: 0; color: #fff; font-size: 1.05em; font-weight: 600; font-family: sans-serif;">${gig.title}</h4>
                     <span style="color: #388E3C; font-weight: bold; background: rgba(56,142,60,0.1); padding: 2px 8px; border-radius: 4px; font-size: 0.9em; font-family: sans-serif;">+ ${gig.payout.toFixed(2)} π</span>
@@ -330,130 +265,53 @@ const MOCK_GIGS_DATABASE = {
                 <p style="margin: 0 0 12px 0; color: #999; font-size: 0.85em; line-height: 1.4; font-family: sans-serif;">${gig.desc}</p>
                 <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #2a2a2a; padding-top: 12px;">
                     <div style="font-size: 0.8em; color: #aaa; font-family: sans-serif;">${proximityLabel}</div>
-                    
-                   <button id="btn-${gig.id}" onclick="alert('Tap registered! Running handler...'); window.executeVerification();" style="padding: 8px 16px; border: none; border-radius: 4px; font-weight: bold; font-size: 0.8em; text-transform: uppercase; background-color: #388E3C; color: white; position: relative; z-index: 99999; pointer-events: auto;">
-                        ${userLat === null ? "Awaiting GPS" : (proximityLabel.includes("At Destination") ? "Verify Data" : "Move Closer")}
+                    <button id="btn-${gig.id}" ${actionButtonState} onclick="window.executeVerification(event, '${gig.id}', ${gig.payout}, '${gig.title.replace(/'/g, "\\'")}')">
+                        ${btnText}
                     </button>
-                    
-                </div>
+               </div>
             </div>
         `;
     });
 }
 // =======================================================
-// 1. TERMINAL GLOBAL ARCHITECTURE & STATE GUARDS
+// 6. REAL-WORLD BLOCKCHAIN HANDSHAKE & TELEMETRY LOGIC
 // =======================================================
-let isSessionAuthenticated = false;
+window.executeVerification = function(event, taskId, taskPayout, taskTitle) {
+    if (event) event.preventDefault();
 
-// Safe wrapper to initialize the platform environment
-if (typeof Pi !== 'undefined') {
-    console.log("[Pi-DLV Core] Injected SDK detected. Securing container...");
-    try {
-        Pi.init({ version: "2.0", sandbox: true });
-        
-        // Authenticate immediately with explicit permission tokens
-        Pi.authenticate(['username', 'payments'], onIncompletePaymentFound, function(authError) {
-            console.error("[Pi-DLV Core] Scope authentication delayed:", authError);
-        });
-    } catch (initError) {
-        console.error("[Pi-DLV Core] Strategic initialization failure:", initError);
-    }
-} else {
-    console.warn("[Pi-DLV Core] Pi SDK anchor missing from viewport headers.");
-}
-
-// =======================================================
-// 2. STUCK LEDGER SWEEP PROTOCOL (AUTO-CLEAN)
-// =======================================================
-function onIncompletePaymentFound(payment) {
-    console.log("[Pi-DLV Core] Sweeping network grid... Stuck block identified:", payment.identifier);
-    isSessionAuthenticated = true; // Mark session ready since platform handshake is communicating
-    
-    const transactionId = payment.transaction?.txid || "";
-
-    fetch('/api/approve-payment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            action: "complete",
-            paymentId: payment.identifier,
-            txid: transactionId
-        })
-    })
-    .then(response => response.json())
-    .then(result => {
-        console.log("[Pi-DLV Core] Server sweep loop clearance response:", result);
-        window.location.reload();
-    })
-    .catch(err => {
-        console.error("[Pi-DLV Core] Critical ledger sweep transmission failure:", err);
-    });
-}
-
-// =======================================================
-// 3. SECURE VERIFICATION GRID HANDSHAKE ENGINE
-// =======================================================
-window.executeVerification = function() {
-    alert("Tap registered! Running handler...");
-
-    // Core Guard 1: Verify the platform layer is responsive
     if (!Pi || typeof Pi.createPayment !== 'function') {
-        alert("System terminal syncing with grid. Please wait 3 seconds and tap again.");
+        alert("SDK Engine initializing. Please wait 3 seconds and tap again.");
         return;
     }
 
-    // Core Guard 2: Force safe flag bypass fallback for sandbox flexibility
-    if (!isSessionAuthenticated) {
-        isSessionAuthenticated = true;
-    }
-
-    // UI Scrapers: Safely discover context elements without utilizing 'event'
-    const button = document.querySelector('.verify-btn') || document.getElementById('verifyDataBtn');
+    const button = event?.target || document.getElementById(`btn-${taskId}`);
     const card = button ? button.closest('.task-card') : null;
 
-    console.log("[Pi-DLV Core] Synchronizing wallet overlay...");
-
+    console.log(`Launching wallet pop-up for transaction validation...`);
+    
     Pi.createPayment({
-        amount: 0.50,
-        memo: "Verification for Yandoka Road Intersection Check",
-        metadata: { taskId: "TASK-YANDOKA-01", type: "verification_stake" }
+        amount: taskPayout, 
+        memo: `Verification for ${taskTitle}`,
+        metadata: { taskId: taskId, type: "verification_stake" }
     }, {
         onReadyForServerApproval: function(paymentId) {
-            console.log("[Pi-DLV Core] Payment block created. Token generated:", paymentId);
-            
-            // Shift interface to load mode
+            console.log("Payment created in Sandbox! ID:", paymentId);
             if (button) {
                 button.innerText = "🔄 LOGGING TELEMETRY...";
                 button.disabled = true;
             }
-
-            // Sync with your live Vercel backend route
-            fetch('/api/approve-payment', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: "approve", paymentId: paymentId })
-            })
-            .then(res => res.json())
-            .then(data => {
-                console.log("[Pi-DLV Core] Backend function validated pipeline:", data);
-            })
-            .catch(err => {
-                console.error("[Pi-DLV Core] Server confirmation failure:", err);
-            });
+            console.log("App Studio automatically managing serverless approval state.");
         },
 
         onPaymentConfirmed: function(paymentId, txid) {
-            console.log("[Pi-DLV Core] Ledger block verified successfully. TXID:", txid);
+            console.log("Transaction hit the blockchain! TXID:", txid);
             
-            // Execute UI changes seamlessly
-            if (card) {
+           if (card) {
                 card.style.opacity = "0.3";
                 card.style.transform = "scale(0.98)";
                 setTimeout(() => card.remove(), 400);
             }
-
-            // Sync stats panel UI arrays
-            const verifiedDisplay = document.getElementById('statsVerifiedCount'); 
+           const verifiedDisplay = document.getElementById('statsVerifiedCount'); 
             if (verifiedDisplay) {
                 let currentGigs = parseInt(verifiedDisplay.innerText) || 0;
                 verifiedDisplay.innerText = currentGigs + 1;
@@ -462,11 +320,10 @@ window.executeVerification = function() {
             const escrowDisplay = document.getElementById('statsPiEarned');
             if (escrowDisplay) {
                 let currentEscrow = parseFloat(escrowDisplay.innerText.replace(/[^\d.]/g, '')) || 0;
-                escrowDisplay.innerText = `${(currentEscrow + 0.50).toFixed(2)} π`;
+                let newTotal = currentEscrow + taskPayout;
+                escrowDisplay.innerText = `${newTotal.toFixed(2)} π`;
             }
-            
-            alert(`🔒 Telemetry Matrix Locked!\nTask completed successfully on blockchain sandbox ledger.\nTXID: ${txid.substring(0, 12)}...`);
-            window.location.reload();
+                        alert(`🔒 Telemetry Matrix Locked!\nTask completed successfully on blockchain sandbox ledger.\nTXID: ${txid.substring(0, 12)}...`);
         },
 
         onCancel: function(paymentId) {
@@ -478,7 +335,7 @@ window.executeVerification = function() {
         },
 
         onError: function(error, payment) {
-            console.error("[Pi-DLV Core] Critical runtime execution error:", error);
+            console.error("Pi Payment Error:", error);
             alert("Terminal Sync Error: Blockchain payment failed.");
             if (button) {
                 button.innerText = "Verify Data";
