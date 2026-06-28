@@ -1,5 +1,7 @@
 import axios from 'axios';
-    export default async function handler(req, res) {
+
+export default async function handler(req, res) {
+    // 1. Enforce strict CORS headers
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
@@ -8,38 +10,58 @@ import axios from 'axios';
     if (req.method !== 'POST') return res.status(405).json({ error: "Method not allowed" });
 
     try {
-    let bodyData = req.body;
-        if (typeof bodyData === 'string') bodyData = JSON.parse(bodyData);
-        const { paymentId } = bodyData;
+        // 2. UNIVERSAL BODY PARSER (Handles raw buffers, strings, and pre-parsed objects)
+        let paymentId = null;
 
-    if (!paymentId || paymentId === "undefined") {
-            return res.status(400).json({ error: "Missing valid paymentId identifier string." });
+        if (req.body) {
+            if (typeof req.body === 'string') {
+                try {
+                    const parsed = JSON.parse(req.body);
+                    paymentId = parsed.paymentId;
+                } catch (e) {
+                    console.error("Failed parsing string body:", e);
+                }
+            } else if (Buffer.isBuffer(req.body)) {
+                try {
+                    const parsed = JSON.parse(req.body.toString('utf-8'));
+                    paymentId = parsed.paymentId;
+                } catch (e) {
+                    console.error("Failed parsing buffer body:", e);
+                }
+            } else if (typeof req.body === 'object') {
+                paymentId = req.body.paymentId;
+            }
         }
 
-        // 1. First, attempt validation via the explicit Testnet ledger path
-        let targetUrl = `https://api.testnet.minepi.com/v2/payments/${paymentId}/approve`;
-        console.log(`📡 Handshaking with Pi Ledger for ID: ${paymentId}`);
+        // Defensive Validation Check
+        if (!paymentId || paymentId === "undefined") {
+            console.error("🔴 PARSING CRASH: paymentId extracted as empty or undefined. Raw body was:", typeof req.body, req.body);
+            return res.status(400).json({ error: "Backend failed to extract valid paymentId from payload stream." });
+        }
 
+        console.log(`📡 Clean Handshake processing for verified ID: ${paymentId}`);
+
+        // 3. Dual-Ledger Validation Engine Routing
+        let targetUrl = `https://api.testnet.minepi.com/v2/payments/${paymentId}/approve`;
+        
         try {
             const piResponse = await axios.post(targetUrl, {}, {
                 headers: { 'Authorization': `Key ${process.env.PI_API_KEY}`, 'Content-Type': 'application/json' }
             });
-            console.log("🟢 Pi Testnet verified transaction successfully!");
+            console.log("🟢 Pi Testnet ledger verified transaction successfully!");
             return res.status(200).json({ approved: true, tx: piResponse.data });
         } catch (testnetError) {
-            // 2. Fallback: If Stellar says 404, route the request through the production endpoint
             if (testnetError.response && testnetError.response.status === 404) {
-                console.log("⚠️ Testnet Stellar node threw 404. Falling back to platform endpoint...");
-                
+                console.log("⚠️ Stellar Node 404: Switching to production platform lane...");
                 let fallbackUrl = `https://api.minepi.com/v2/payments/${paymentId}/approve`;
+                
                 const piFallbackResponse = await axios.post(fallbackUrl, {}, {
                     headers: { 'Authorization': `Key ${process.env.PI_API_KEY}`, 'Content-Type': 'application/json' }
                 });
-                
-                console.log("🟢 Platform endpoint verified transaction successfully!");
+                console.log("🟢 Production platform lane verified transaction successfully!");
                 return res.status(200).json({ approved: true, tx: piFallbackResponse.data });
             }
-            throw testnetError; // If it's a different error (like 401 Unauthorized), pass it to main catch
+            throw testnetError;
         }
 
     } catch (error) {
