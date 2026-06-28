@@ -365,7 +365,7 @@ window.executeVerification = function(event, gigId, payout, gigTitle) {
                 .catch(err => console.error("Backend validation timeout:", err));
             },
 
-            onPaymentConfirmed: function(txid) {
+          onReadyForServerCompletion: function(paymentId, txid) {
                 console.log("Transaction hit the blockchain! TXID:", txid);
                 
                 if (card) {
