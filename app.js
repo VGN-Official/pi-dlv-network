@@ -90,49 +90,42 @@ window.onerror = function(message, source, lineno, colno, error) {
 // =======================================================
 // 1. INITIALIZE PI ENGINE & AUTO-SWEEP PENDING BLOCKS
 // =======================================================
-if (isPiBrowserEngine) {
-    try {
-       Pi.init({ version: "2.0", sandbox: true, scopes: ["username", "payments"] });
-        console.log("Pi SDK Matrix Initialized.");
-// 🎯 FIX: Removed the invalid 'payments' string from the array
-        Pi.authenticate(['username'], onIncompletePaymentFound)
-            .then(function(auth) {
-                console.log(`[Pi-DLV Core] Operator authenticated: ${auth.user.username}`);
-                if (typeof initializeTrackingPipeline === "function") initializeTrackingPipeline(); 
-            })
-            .catch(function(authError) {
-                console.error("Pi Authentication mapping failed:", authError);
-            });
-
-    } catch (e) {
-        console.error("SDK initialization error:", e);
-    }
-}
-// 🔴 THE AUTO-CLEAN PROTOCOL: Active for the new App Studio profile
-function onIncompletePaymentFound(payment) {
-    console.log("Incomplete payment detected on new App Profile:", payment.identifier);
+try {
+    // Initialize the core platform wrapper
+    Pi.init({ version: "2.0", sandbox: true });
+    console.log("Pi SDK Core initiated successfully.");
     
-    const transactionId = payment.transaction?.txid || "";
+    // Explicitly authenticate the session and lock in BOTH username and payments scopes
+    Pi.authenticate(['username', 'payments'], onIncompletePaymentFound)
+        .then(function(auth) {
+            console.log(`[Pi-DLV Core] Terminal session securely authenticated: ${auth.user.username}`);
+            // Fire your background tracking matrix safely if it exists
+            if (typeof initializeTrackingPipeline === "function") initializeTrackingPipeline(); 
+        })
+        .catch(function(authError) {
+            console.error("SDK Authorization failed to secure payment scope:", authError);
+        });
 
+} catch (e) {
+    console.error("Critical failure during terminal bootstrap sequence:", e);
+}
+
+// Fallback function wrapper to handle stuck ledger state cleanups
+function onIncompletePaymentFound(payment) {
+    console.log("Sweeping ledger... Incomplete transaction detected:", payment.identifier);
+    const transactionId = payment.transaction?.txid || "";
+    
     fetch('/api/approve-payment', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            action: "complete",
-            paymentId: payment.identifier,
-            txid: transactionId
-        })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: "complete", paymentId: payment.identifier, txid: transactionId })
     })
-    .then(response => response.json())
+    .then(res => res.json())
     .then(result => {
-        console.log("Server response:", result);
+        console.log("Server response for incomplete auto-sweep:", result);
         window.location.reload();
     })
-    .catch(err => {
-        console.error("Transmission fail:", err);
-    });
+    .catch(err => console.error("Auto-clear sweep failed:", err));
 }
 // =======================================================
 // 2. SECURE LOGISTIC GATEWAY AUTH HANDLER
