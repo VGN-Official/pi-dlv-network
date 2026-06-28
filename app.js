@@ -30,55 +30,23 @@ window.onerror = function(message, source, lineno, colno, error) {
 // =======================================================
 if (isPiBrowserEngine) {
     try {
-        // CRUCIAL FIX: Explicitly pass the scopes into the global initialization matrix
-        Pi.init({ 
+                Pi.init({ 
             version: "2.0", 
-            sandbox: true,
-            scopes: ['username', 'payments'] 
+            sandbox: true 
         });
-        console.log("[Pi-DLV Core] Pi SDK Matrix Initialized with Payments Scopes.");
+        console.log("[Pi-DLV Core] Pi SDK Matrix Initialized.");
 
-   // =======================================================
-// INTERFACE AUTHENTICATION & SECURITY SCOPE INITIALIZATION
-// =======================================================
-Pi.authenticate(['username', 'payments'], function(payment) {
-    // 1. This function handles any uncompleted payments discovered on boot
-    console.log("[Pi-DLV Core] Incomplete payment detected on startup:", payment.identifier);
-    
-    const transactionId = payment.transaction?.txid || "";
-    
-    // Forward straight to your Vercel Node backend to instantly clear the loop
-    fetch('/api/approve-payment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            action: "complete",
-            paymentId: payment.identifier,
-            txid: transactionId
+        // Correct Platform Signature: Scopes array first, incomplete payment callback second
+        Pi.authenticate(['username', 'payments'], onIncompletePaymentFound)
+        .then(function(auth) {
+            console.log(`[Pi-DLV Core] Engine boot auto-auth success: ${auth.user.username}`);
+            currentPioneerUsername = auth.user.username;
+            if (typeof initializeTrackingPipeline === "function") initializeTrackingPipeline();
         })
-    })
-    .then(res => res.json())
-    .then(result => {
-        console.log("Stuck transaction handshake resolved:", result);
-        window.location.reload();
-    })
-    .catch(err => console.error("Failed to clear stuck payment hook:", err));
+        .catch(function(authError) {
+            console.error("[Pi-DLV Core] Engine boot auto-auth failed:", authError);
+        });
 
-}).then(function(auth) {
-    // 2. This block fires ONLY after successful login authorization
-    console.log(`[Pi-DLV Core] Operator authenticated successfully: ${auth.user.username}`);
-    
-    // Globally save the user session variable
-    window.currentPioneerUsername = auth.user.username;
-    
-    // Wake up your main dashboard elements 
-    if (typeof initializeTrackingPipeline === "function") {
-        initializeTrackingPipeline();
-    }
-}).catch(function(authError) {
-    // 3. Catch block for handling any user or device connection declines
-    console.error("[Pi-DLV Core] Pi Authentication mapping failed:", authError);
-});
     } catch (e) {
         console.error("[Pi-DLV Core] SDK initialization error:", e);
     }
@@ -121,29 +89,32 @@ document.addEventListener("DOMContentLoaded", () => {
             e.preventDefault();
             console.log("[Pi-DLV SDK] Initializing Secure Auth sequence...");
             
-         if (isPiBrowserEngine) {
+            if (isPiBrowserEngine) {
                 const authBypassTimeout = setTimeout(() => {
                     console.warn("[Pi-DLV SDK] Sandbox frame delay. Engaging Bypass...");
                     unlockOperationalDashboard();
-                }, 1000);
+                }, 4000); // Bumped to 4s to give the real signature time to pull credentials cleanly
 
                 try {
-                    Pi.authenticate(['username', 'payments'], (auth) => {
+                    // Correct implementation using standard Promise chaining for success/error states
+                    Pi.authenticate(['username', 'payments'], onIncompletePaymentFound)
+                    .then((auth) => {
                         clearTimeout(authBypassTimeout); 
                         console.log(`[Pi-DLV SDK] Sandbox login verified: ${auth.user.username}`);
                         currentPioneerUsername = auth.user.username;
                         unlockOperationalDashboard();
-                    }, (onAuthError) => {
+                    })
+                    .catch((onAuthError) => {
                         clearTimeout(authBypassTimeout);
-                        console.error("[Pi-DLV SDK] Sandbox auth failed, engaging fallback:", onAuthError);
+                        console.error("[Pi-DLV SDK] Sandbox auth failed:", onAuthError);
                         unlockOperationalDashboard();
                     });
                 } catch (err) {
                     clearTimeout(authBypassTimeout);
                     console.warn("[Pi-DLV SDK] Caught cross-origin window block. Forcing transition.");
                     unlockOperationalDashboard();
-             }
-           } else {
+                }
+            } else {
                 unlockOperationalDashboard();
             }
         });
@@ -200,7 +171,7 @@ function unlockOperationalDashboard() {
     if (gatewayLock && mainDashboard) {
         gatewayLock.style.display = "none";      
         mainDashboard.style.display = "block";    
-}
+    }
 
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
@@ -310,24 +281,21 @@ function seedLocalVerificationGigs(localeSlug, userLat = null, userLon = null) {
         `;
     });
 }
+
 // =======================================================
 // 6. REAL-WORLD BLOCKCHAIN HANDSHAKE & TELEMETRY LOGIC
 // =======================================================
 window.executeVerification = function(event, gigId, payout, gigTitle) {
     console.log("Handshake caught. Parsing variables cleanly...");
 
-    // 1. Guard against uninitialized Pi engine
-    if (typeof Pi === 'undefined' || !Pi.createPayment) {
+if (typeof Pi === 'undefined' || !Pi.createPayment) {
         alert("Syncing with node telemetry. Please wait 3 seconds and tap again.");
         return;
     }
 
-    // 2. Identify the dynamic button and card UI elements safely
-    const button = event?.target || document.getElementById(`btn-${gigId}`);
-    const card = button ? button.closest('.task-card') : null;
-
-    // 3. Clean and parse your dynamic input payload parameters
-    const cleanAmount = parseFloat(payout) || 0.50; 
+        const button = event?.target || document.getElementById(`btn-${gigId}`);
+        const card = button ? button.closest('.task-card') : null;
+        const cleanAmount = parseFloat(payout) || 0.50; 
 
     console.log(`Launching secure wallet container for ${cleanAmount} π...`);
 
@@ -342,15 +310,12 @@ window.executeVerification = function(event, gigId, payout, gigTitle) {
     }, {
         onReadyForServerApproval: function(paymentId) {
             console.log("Payment created in Sandbox! ID:", paymentId);
-            
-            // Lock down the button interface instantly so the operator doesn't double-click
-            if (button) {
+           if (button) {
                 button.innerText = "🔄 LOGGING TELEMETRY...";
                 button.disabled = true;
             }
 
-            // Sync securely with your active Vercel serverless function background engine
-            fetch('/api/approve-payment', {
+           fetch('/api/approve-payment', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
@@ -367,15 +332,13 @@ window.executeVerification = function(event, gigId, payout, gigTitle) {
         onPaymentConfirmed: function(txid) {
             console.log("Transaction hit the blockchain! TXID:", txid);
             
-            // Cleanly slide out the task item from the UI layout grid
-            if (card) {
+           if (card) {
                 card.style.opacity = "0.3";
                 card.style.transform = "scale(0.98)";
                 setTimeout(() => card.remove(), 400);
             }
 
-            // Instantly tick up the dashboard telemetry display counters
-            const verifiedDisplay = document.getElementById('statsVerifiedCount'); 
+        const verifiedDisplay = document.getElementById('statsVerifiedCount'); 
             if (verifiedDisplay) {
                 let currentGigs = parseInt(verifiedDisplay.innerText) || 0;
                 verifiedDisplay.innerText = currentGigs + 1;
