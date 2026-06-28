@@ -20,10 +20,10 @@ export default async function handler(req, res) {
 
             // 1. Submit approval request directly to Pi Blockchain Core
             const response = await axios.post(
-                `https://api.minepi.com/v2/payments/${paymentId}/approve`,
+                `https://api.testnet.minepi.com/v2/payments/${paymentId}/approve`,
                 {},
                 {
-                    headers: { Authorization: `Key ${apiKey}` }
+                    headers: { Authorization: `Key ${process.env.PI_API_KEY}` }
                 }
             );
 
