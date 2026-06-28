@@ -38,20 +38,47 @@ if (isPiBrowserEngine) {
         });
         console.log("[Pi-DLV Core] Pi SDK Matrix Initialized with Payments Scopes.");
 
-        // Force authorization scope handshake immediately on engine boot
-        Pi.authenticate(['username', 'payments'], function(auth) {
-            console.log(`[Pi-DLV Core] Operator authenticated successfully: ${auth.user.username}`);
-            currentPioneerUsername = auth.user.username;
-            
-            // Check for stuck ledger hooks right after securing the session
-            if (typeof onIncompletePaymentFound === "function") {
-                // If the Pi SDK provides an native listener, pass it, otherwise execute tracking pipeline
-                if (typeof initializeTrackingPipeline === "function") initializeTrackingPipeline();
-            }
-        }, function(authError) {
-            console.error("[Pi-DLV Core] Pi Authentication mapping failed:", authError);
-        });
+   // =======================================================
+// INTERFACE AUTHENTICATION & SECURITY SCOPE INITIALIZATION
+// =======================================================
+Pi.authenticate(['username', 'payments'], function(payment) {
+    // 1. This function handles any uncompleted payments discovered on boot
+    console.log("[Pi-DLV Core] Incomplete payment detected on startup:", payment.identifier);
+    
+    const transactionId = payment.transaction?.txid || "";
+    
+    // Forward straight to your Vercel Node backend to instantly clear the loop
+    fetch('/api/approve-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            action: "complete",
+            paymentId: payment.identifier,
+            txid: transactionId
+        })
+    })
+    .then(res => res.json())
+    .then(result => {
+        console.log("Stuck transaction handshake resolved:", result);
+        window.location.reload();
+    })
+    .catch(err => console.error("Failed to clear stuck payment hook:", err));
 
+}).then(function(auth) {
+    // 2. This block fires ONLY after successful login authorization
+    console.log(`[Pi-DLV Core] Operator authenticated successfully: ${auth.user.username}`);
+    
+    // Globally save the user session variable
+    window.currentPioneerUsername = auth.user.username;
+    
+    // Wake up your main dashboard elements 
+    if (typeof initializeTrackingPipeline === "function") {
+        initializeTrackingPipeline();
+    }
+}).catch(function(authError) {
+    // 3. Catch block for handling any user or device connection declines
+    console.error("[Pi-DLV Core] Pi Authentication mapping failed:", authError);
+});
     } catch (e) {
         console.error("[Pi-DLV Core] SDK initialization error:", e);
     }
