@@ -287,22 +287,23 @@ function seedLocalVerificationGigs(localeSlug, userLat = null, userLon = null) {
 // 6. REAL-WORLD BLOCKCHAIN HANDSHAKE & TELEMETRY LOGIC
 // =======================================================
 window.executeVerification = function(event, gigId, payout, gigTitle) {
-     console.log("Handshake caught. Parsing variables cleanly...");
+    console.log("Handshake caught. Parsing variables cleanly...");
 
     const button = event?.target || document.getElementById(`btn-${gigId}`);
     const card = button ? button.closest('.task-card') : null;
     const cleanAmount = parseFloat(payout) || 0.50; 
+    const cleanTitle = gigTitle || "VGN Matrix Verification Service";
 
     // 🔴 BULLETPROOF SIMULATOR GUARD: If running as desktop operator, force render instantly
-    if (currentPioneerUsername === "VGN_Operator_01" || typeof Pi === 'undefined' || !Pi.createPayment) {
+    if (typeof currentPioneerUsername !== 'undefined' && currentPioneerUsername === "VGN_Operator_01" || typeof Pi === 'undefined' || !Pi.createPayment) {
         console.warn("[Pi-DLV Simulator] Desktop execution profile active. Simulating report rendering...");
         
-    if (button) {
+        if (button) {
             button.innerText = "🔄 LOGGING TELEMETRY...";
             button.disabled = true;
         }
         
-    setTimeout(() => {
+        setTimeout(() => {
             console.log("[Pi-DLV Simulator] Rendering execution report...");
             
             if (card) {
@@ -331,43 +332,53 @@ window.executeVerification = function(event, gigId, payout, gigTitle) {
     }
 
     // =======================================================
-    // REAL MOBILE BLOCKCHAIN ENGINE (Runs only on authenticated phone session)
+    // REAL MOBILE BLOCKCHAIN ENGINE (Runs only on phone)
     // =======================================================
-    console.log(`Launching secure wallet container for ${cleanAmount} π...`);
+    console.log(`Initializing secure blockchain checkout transaction for ${cleanAmount} π...`);
+
+    if (button) {
+        button.innerText = "🔄 LOGGING TELEMETRY...";
+        button.disabled = true;
+    }
 
     try {
         Pi.createPayment({
-            amount: cleanAmount, 
-            memo: `Verification for ${gigTitle}`,
+            amount: cleanAmount,
+            memo: `Verification for ${cleanTitle}`,
             metadata: { 
-                gigId: gigId, 
-                type: "verification_stake",
+                gigId: gigId || "generic_task",
+                taskType: "intersection_clearance",
                 compact: "Bauchi-Central-Grid"
             }
         }, {
             onReadyForServerApproval: function(paymentId) {
-                console.log("Payment created in Sandbox! ID:", paymentId);
-                if (button) {
-                    button.innerText = "🔄 LOGGING TELEMETRY...";
-                    button.disabled = true;
+                console.log(`📡 Frontend caught verified Payment ID from SDK: ${paymentId}`);
+                
+                if (!paymentId) {
+                    alert("Critical: Pi SDK returned an empty tracking signature.");
+                    if (button) {
+                        button.innerText = "Verify Data";
+                        button.disabled = false;
+                    }
+                    return;
                 }
 
+                // Transmit the raw payload string explicitly to your Vercel route
                 fetch('/api/approve-payment', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        action: "approve", 
-                        paymentId: paymentId, 
-                        gigId: gigId 
-                    })
+                    body: JSON.stringify({ paymentId: paymentId }) 
                 })
                 .then(res => res.json())
-                .then(data => console.log("Backend server verification match:", data))
-                .catch(err => console.error("Backend validation timeout:", err));
+                .then(data => {
+                    console.log("Backend server verification match:", data);
+                })
+                .catch(err => {
+                    console.error("Transmission breakdown to Vercel path:", err);
+                });
             },
-
-          onReadyForServerCompletion: function(paymentId, txid) {
-                console.log("Transaction hit the blockchain! TXID:", txid);
+            onReadyForServerCompletion: function(paymentId, txid) {
+                console.log(`🟢 Blockchain transaction confirmed! TXID: ${txid}`);
                 
                 if (card) {
                     card.style.opacity = "0.3";
@@ -388,20 +399,25 @@ window.executeVerification = function(event, gigId, payout, gigTitle) {
                     escrowDisplay.innerText = `${newTotal.toFixed(2)} π`;
                 }
 
+                // Forward completion signature straight to backend for final tracking ledger
+                fetch('/api/complete-payment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ paymentId: paymentId, txid: txid })
+                });
+
                 alert(`🔒 Telemetry Matrix Locked!\nTask completed successfully on blockchain sandbox ledger.`);
                 window.location.reload();
-            },
-
+        },
             onCancel: function(paymentId) {
-                console.log("Cancelled:", paymentId);
+                console.log("Transaction explicitly cancelled by operator:", paymentId);
                 if (button) {
                     button.innerText = "Verify Data";
                     button.disabled = false;
                 }
-            },
-
+           },
             onError: function(error, payment) {
-                console.error("Wallet core failure:", error);
+                console.error("Critical Pi SDK Runtime Exception Error:", error);
                 alert("Terminal Sync Error: Blockchain payment failed.");
                 if (button) {
                     button.innerText = "Verify Data";
