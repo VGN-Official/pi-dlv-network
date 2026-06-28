@@ -30,14 +30,24 @@ window.onerror = function(message, source, lineno, colno, error) {
 // =======================================================
 if (isPiBrowserEngine) {
     try {
-        Pi.init({ version: "2.0", sandbox: true });
-        console.log("[Pi-DLV Core] Pi SDK Matrix Initialized.");
+        // CRUCIAL FIX: Explicitly pass the scopes into the global initialization matrix
+        Pi.init({ 
+            version: "2.0", 
+            sandbox: true,
+            scopes: ['username', 'payments'] 
+        });
+        console.log("[Pi-DLV Core] Pi SDK Matrix Initialized with Payments Scopes.");
 
-        // Handshake instantly on load to map user details safely
+        // Force authorization scope handshake immediately on engine boot
         Pi.authenticate(['username', 'payments'], function(auth) {
-            console.log(`[Pi-DLV Core] Operator authenticated: ${auth.user.username}`);
+            console.log(`[Pi-DLV Core] Operator authenticated successfully: ${auth.user.username}`);
             currentPioneerUsername = auth.user.username;
-            if (typeof initializeTrackingPipeline === "function") initializeTrackingPipeline(); 
+            
+            // Check for stuck ledger hooks right after securing the session
+            if (typeof onIncompletePaymentFound === "function") {
+                // If the Pi SDK provides an native listener, pass it, otherwise execute tracking pipeline
+                if (typeof initializeTrackingPipeline === "function") initializeTrackingPipeline();
+            }
         }, function(authError) {
             console.error("[Pi-DLV Core] Pi Authentication mapping failed:", authError);
         });
