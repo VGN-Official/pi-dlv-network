@@ -34,6 +34,7 @@ if (isPiBrowserEngine) {
             version: "2.0", 
             sandbox: true 
         });
+        console.log("Pi SDK Handshake Initialized.");
         console.log("[Pi-DLV Core] Pi SDK Matrix Initialized.");
 
         // Correct Platform Signature: Scopes array first, incomplete payment callback second
@@ -58,23 +59,23 @@ if (isPiBrowserEngine) {
 function onIncompletePaymentFound(payment) {
     console.log("Incomplete payment detected on App Profile:", payment.identifier);
     const transactionId = payment.transaction?.txid || "";
-
+    
+    // Send a secure ping to your Vercel backend to complete or clear the loop
     fetch('/api/approve-payment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            action: "complete",
-            paymentId: payment.identifier,
-            txid: transactionId
+        body: JSON.stringify({ 
+            paymentId: payment.identifier, 
+            transactionId: transactionId,
+            action: "clear_incomplete" 
         })
     })
-    .then(response => response.json())
-    .then(result => {
-        console.log("Server sweep complete response:", result);
-        window.location.reload();
+    .then(res => res.json())
+    .then(data => {
+        console.log("[Pi-DLV Core] Incomplete transaction state aligned with server:", data);
     })
     .catch(err => {
-        console.error("Transmission sweep failure:", err);
+        console.error("[Pi-DLV Core] Error auto-clearing incomplete payment:", err);
     });
 }
 
