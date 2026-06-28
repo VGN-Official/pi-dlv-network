@@ -1,0 +1,27 @@
+{
+  "name": "pi-dlv-network",
+  "version": "1.0.0",
+  "description": "A decentralized crowd-sourced logistics, route-safety, and data verification platform powered by Vigilan Global Network Limited.",
+  "main": "api/approve-payment.mjs",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/VGN-Official/pi-dlv-network.git"
+  },
+  "keywords": [
+    "pi-network",
+    "vgn",
+    "logistics"
+  ],
+  "author": "Vigilan Global Network Limited",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/VGN-Official/pi-dlv-network/issues"
+  },
+  "homepage": "https://github.com/VGN-Official/pi-dlv-network#readme",
+  "dependencies": {
+    "axios": "^1.18.1"
+  }
+}
