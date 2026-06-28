@@ -286,31 +286,22 @@ function seedLocalVerificationGigs(localeSlug, userLat = null, userLon = null) {
 // 6. REAL-WORLD BLOCKCHAIN HANDSHAKE & TELEMETRY LOGIC
 // =======================================================
 window.executeVerification = function(event, gigId, payout, gigTitle) {
-    console.log("Handshake caught. Parsing variables cleanly...");
+     console.log("Handshake caught. Parsing variables cleanly...");
 
-if (typeof Pi === 'undefined' || !Pi.createPayment) {
-        alert("Syncing with node telemetry. Please wait 3 seconds and tap again.");
-        return;
-    }
+    const button = event?.target || document.getElementById(`btn-${gigId}`);
+    const card = button ? button.closest('.task-card') : null;
+    const cleanAmount = parseFloat(payout) || 0.50; 
 
-        const button = event?.target || document.getElementById(`btn-${gigId}`);
-        const card = button ? button.closest('.task-card') : null;
-        const cleanAmount = parseFloat(payout) || 0.50; 
-
-    console.log(`Launching secure wallet container for ${cleanAmount} π...`);
-
-    // 🔴 ENVIRONMENTAL GUARD: If testing on PC, bypass the native wallet crash
-    if (!isPiBrowserEngine || typeof Pi === 'undefined' || !Pi.createPayment) {
-        console.warn("[Pi-DLV Simulator] Non-Pi environment detected. Simulating successful ledger handshake for PC desktop testing...");
+    // 🔴 BULLETPROOF SIMULATOR GUARD: If running as desktop operator, force render instantly
+    if (currentPioneerUsername === "VGN_Operator_01" || typeof Pi === 'undefined' || !Pi.createPayment) {
+        console.warn("[Pi-DLV Simulator] Desktop execution profile active. Simulating report rendering...");
         
-        // Instantly simulate a successful blockchain confirmation so your UI renders the report
-        if (button) {
+    if (button) {
             button.innerText = "🔄 LOGGING TELEMETRY...";
             button.disabled = true;
         }
         
-        setTimeout(() => {
-            // Trigger your native UI rendering logic directly on the PC screen
+    setTimeout(() => {
             console.log("[Pi-DLV Simulator] Rendering execution report...");
             
             if (card) {
@@ -328,86 +319,96 @@ if (typeof Pi === 'undefined' || !Pi.createPayment) {
             const escrowDisplay = document.getElementById('statsPiEarned');
             if (escrowDisplay) {
                 let currentEscrow = parseFloat(escrowDisplay.innerText.replace(/[^\d.]/g, '')) || 0;
-                escrowDisplay.innerText = `${(currentEscrow + cleanAmount).toFixed(2)} π`;
-            }
-
-            alert(`🔒 Desktop Simulation Complete!\nTask report rendered successfully on local screen matrix.`);
-        }, 1000);
-        
-        return; // Stop execution here so the native Pi SDK doesn't run and crash the script
-    }
-
-    Pi.createPayment({
-        amount: cleanAmount, 
-        memo: `Verification for ${gigTitle}`,
-        metadata: { 
-            gigId: gigId, 
-            type: "verification_stake",
-            compact: "Bauchi-Central-Grid"
-        }
-    }, {
-        onReadyForServerApproval: function(paymentId) {
-            console.log("Payment created in Sandbox! ID:", paymentId);
-           if (button) {
-                button.innerText = "🔄 LOGGING TELEMETRY...";
-                button.disabled = true;
-            }
-
-           fetch('/api/approve-payment', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    action: "approve", 
-                    paymentId: paymentId, 
-                    gigId: gigId 
-                })
-            })
-            .then(res => res.json())
-            .then(data => console.log("Backend server verification match:", data))
-            .catch(err => console.error("Backend validation timeout:", err));
-        },
-
-        onPaymentConfirmed: function(txid) {
-            console.log("Transaction hit the blockchain! TXID:", txid);
-            
-           if (card) {
-                card.style.opacity = "0.3";
-                card.style.transform = "scale(0.98)";
-                setTimeout(() => card.remove(), 400);
-            }
-
-        const verifiedDisplay = document.getElementById('statsVerifiedCount'); 
-            if (verifiedDisplay) {
-                let currentGigs = parseInt(verifiedDisplay.innerText) || 0;
-                verifiedDisplay.innerText = currentGigs + 1;
-            }
-
-            const escrowDisplay = document.getElementById('statsPiEarned');
-            if (escrowDisplay) {
-                let currentEscrow = parseFloat(escrowDisplay.innerText.replace(/[^\d.]/g, '')) || 0;
                 let newTotal = currentEscrow + cleanAmount;
                 escrowDisplay.innerText = `${newTotal.toFixed(2)} π`;
             }
 
-            alert(`🔒 Telemetry Matrix Locked!\nTask completed successfully on blockchain sandbox ledger.`);
-            window.location.reload();
-        },
+            alert(`🔒 Desktop Simulation Complete!\nTask report rendered successfully on local screen matrix.`);
+        }, 800);
+        
+        return; // Exits immediately, completely shielding the PC from the SDK crash
+    }
 
-        onCancel: function(paymentId) {
-            console.log("Cancelled:", paymentId);
-            if (button) {
-                button.innerText = "Verify Data";
-                button.disabled = false;
-            }
-        },
+    // =======================================================
+    // REAL MOBILE BLOCKCHAIN ENGINE (Runs only on authenticated phone session)
+    // =======================================================
+    console.log(`Launching secure wallet container for ${cleanAmount} π...`);
 
-        onError: function(error, payment) {
-            console.error("Wallet core failure:", error);
-            alert("Terminal Sync Error: Blockchain payment failed.");
-            if (button) {
-                button.innerText = "Verify Data";
-                button.disabled = false;
+    try {
+        Pi.createPayment({
+            amount: cleanAmount, 
+            memo: `Verification for ${gigTitle}`,
+            metadata: { 
+                gigId: gigId, 
+                type: "verification_stake",
+                compact: "Bauchi-Central-Grid"
             }
-        }
-    });
+        }, {
+            onReadyForServerApproval: function(paymentId) {
+                console.log("Payment created in Sandbox! ID:", paymentId);
+                if (button) {
+                    button.innerText = "🔄 LOGGING TELEMETRY...";
+                    button.disabled = true;
+                }
+
+                fetch('/api/approve-payment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        action: "approve", 
+                        paymentId: paymentId, 
+                        gigId: gigId 
+                    })
+                })
+                .then(res => res.json())
+                .then(data => console.log("Backend server verification match:", data))
+                .catch(err => console.error("Backend validation timeout:", err));
+            },
+
+            onPaymentConfirmed: function(txid) {
+                console.log("Transaction hit the blockchain! TXID:", txid);
+                
+                if (card) {
+                    card.style.opacity = "0.3";
+                    card.style.transform = "scale(0.98)";
+                    setTimeout(() => card.remove(), 400);
+                }
+
+                const verifiedDisplay = document.getElementById('statsVerifiedCount'); 
+                if (verifiedDisplay) {
+                    let currentGigs = parseInt(verifiedDisplay.innerText) || 0;
+                    verifiedDisplay.innerText = currentGigs + 1;
+                }
+
+                const escrowDisplay = document.getElementById('statsPiEarned');
+                if (escrowDisplay) {
+                    let currentEscrow = parseFloat(escrowDisplay.innerText.replace(/[^\d.]/g, '')) || 0;
+                    let newTotal = currentEscrow + cleanAmount;
+                    escrowDisplay.innerText = `${newTotal.toFixed(2)} π`;
+                }
+
+                alert(`🔒 Telemetry Matrix Locked!\nTask completed successfully on blockchain sandbox ledger.`);
+                window.location.reload();
+            },
+
+            onCancel: function(paymentId) {
+                console.log("Cancelled:", paymentId);
+                if (button) {
+                    button.innerText = "Verify Data";
+                    button.disabled = false;
+                }
+            },
+
+            onError: function(error, payment) {
+                console.error("Wallet core failure:", error);
+                alert("Terminal Sync Error: Blockchain payment failed.");
+                if (button) {
+                    button.innerText = "Verify Data";
+                    button.disabled = false;
+                }
+            }
+        });
+    } catch (paymentBlockErr) {
+        console.error("[Pi-DLV Core] Blockchain block intercept:", paymentBlockErr);
+    }
 };
