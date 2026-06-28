@@ -348,15 +348,25 @@ const MOCK_GIGS_DATABASE = {
     });
 }
 
-
-// 1. Initialize the Pi SDK immediately when app.js runs
+// =======================================================
+// 1. APP STUDIO INITIALIZATION & AUTH HANDSHAKE
+// =======================================================
 if (typeof Pi !== 'undefined') {
-    console.log("Pi SDK detected immediately. Initializing...");
+    console.log("Pi SDK detected. Initializing...");
     Pi.init({ version: "2.0", sandbox: true });
+
+    // Force the authorization scope handshake immediately on load
+    Pi.authenticate(['username', 'payments'], function(auth) {
+        console.log("App Studio Session Secured for: " + auth.user.username);
+    }, function(error) {
+        console.error("Authentication handshake delayed: ", error);
+    });
+} else {
+    console.warn("Pi SDK script not detected yet by the runtime engine.");
 }
 
 // =======================================================
-// REAL-WORLD BLOCKCHAIN HANDSHAKE & TELEMETRY LOGIC
+// 2. REAL-WORLD BLOCKCHAIN HANDSHAKE & TELEMETRY LOGIC
 // =======================================================
 
 window.executeVerification = function() {
@@ -368,81 +378,58 @@ window.executeVerification = function() {
         return;
     }
 
+    // Cache elements safely for UI feedback updates
+    const button = event?.target || document.querySelector('.verify-btn') || document.getElementsByClassName('Verify Data')[0];
+    const card = button ? button.closest('.task-card') || button.parentElement : null;
+
     console.log("Launching wallet pop-up...");
+    
     // Initiate Official Pi Blockchain Payment Request Matrix
     Pi.createPayment({
-        amount: 0.50, // 🎯 Matches the exact task value shown on your terminal dashboard
-        memo: "Verification for Yandoka Road Intersection Check", // 🎯 Descriptive memo format
-        metadata: { taskId: "TASK-YANDOKA-01", type: "verification_stake" }, // 🎯 Structured backend task ID
-        uid: "operator-test-session-node-" + Date.now() // 🔴 Unique timestamp prevents duplication locks
+        amount: 0.50, // 🎯 Matches the task value shown on your terminal dashboard
+        memo: "Verification for Yandoka Road Intersection Check",
+        metadata: { taskId: "TASK-YANDOKA-01", type: "verification_stake" }
     }, {
         onReadyForServerApproval: function(paymentId) {
-            console.log("Payment created! ID:", paymentId);
+            console.log("Payment created in Sandbox! ID:", paymentId);
             
             // Immediately engage visual feedback loading state
             if (button) {
                 button.innerText = "🔄 LOGGING TELEMETRY...";
                 button.disabled = true;
             }
-
-            // 🎯 Use relative routing pathing to prevent cross-origin iframe security blocks
-            fetch('/api/approve-payment', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ paymentId: paymentId })
-            })
-            .then(res => res.json())
-            .then(data => {
-                console.log("Backend verification acknowledged:", data);
-            })
-            .catch(err => {
-                console.error("Network routing error:", err);
-            });
+            
+            // In App Studio's pure client setup, we acknowledge creation instantly
+            console.log("App Studio automatically managing serverless approval state.");
         },
 
         onPaymentConfirmed: function(paymentId, txid) {
             console.log("Transaction hit the blockchain! TXID:", txid);
             
-            fetch('/api/approve-payment', { 
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    action: "complete", 
-                    paymentId: paymentId, 
-                    txid: txid 
-                })
-            })
-            .then(res => {
-                if (!res.ok) throw new Error("Server completion failed");
-                return res.json();
-            })
-            .then(() => {
-                if (card) {
-                    card.style.opacity = "0.3";
-                    card.style.transform = "scale(0.98)";
-                    setTimeout(() => card.remove(), 400);
-                }
+            // Process visual updates locally since backend handling is stripped
+            if (card) {
+                card.style.opacity = "0.3";
+                card.style.transform = "scale(0.98)";
+                setTimeout(() => card.remove(), 400);
+            }
 
-                const verifiedDisplay = document.getElementById('statsVerifiedCount'); 
-                if (verifiedDisplay) {
-                    let currentGigs = parseInt(verifiedDisplay.innerText) || 0;
-                    verifiedDisplay.innerText = currentGigs + 1;
-                }
+            // Update Verified Gigs Counter
+            const verifiedDisplay = document.getElementById('statsVerifiedCount'); 
+            if (verifiedDisplay) {
+                let currentGigs = parseInt(verifiedDisplay.innerText) || 0;
+                verifiedDisplay.innerText = currentGigs + 1;
+            }
 
-                const escrowDisplay = document.getElementById('statsPiEarned');
-                if (escrowDisplay) {
-                    let currentEscrow = parseFloat(escrowDisplay.innerText.replace(/[^\d.]/g, '')) || 0;
-                    let plannedPayout = 0.50;
-                    let newTotal = currentEscrow + plannedPayout;
-                    escrowDisplay.innerText = `${newTotal.toFixed(2)} π`;
-                }
-                
-                alert(`🔒 Telemetry Matrix Locked!\nTask completed successfully on blockchain sandbox ledger.\nTXID: ${txid.substring(0, 12)}...`);
-            })
-            .catch(err => {
-                console.error("Completion endpoint error:", err);
-                alert("Payment recorded on ledger, but failed final server validation handshake.");
-            });
+            // Update Escrow Account Balance Display
+            const escrowDisplay = document.getElementById('statsPiEarned');
+            if (escrowDisplay) {
+                let currentEscrow = parseFloat(escrowDisplay.innerText.replace(/[^\d.]/g, '')) || 0;
+                let plannedPayout = 0.50;
+                let newTotal = currentEscrow + plannedPayout;
+                escrowDisplay.innerText = `${newTotal.toFixed(2)} π`;
+            }
+            
+            alert(`🔒 Telemetry Matrix Locked!\nTask completed successfully on blockchain sandbox ledger.\nTXID: ${txid.substring(0, 12)}...`);
         },
 
         onCancel: function(paymentId) {
@@ -463,32 +450,3 @@ window.executeVerification = function() {
         }
     });
 };
-// =======================================================
-// 7. BLOCKCHAIN NETWORK TRANSACTION PROMPT
-// =======================================================
-async function runTestTransaction() {
-    try {
-        await Pi.createPayment({
-            amount: 0.1,
-            memo: "Testnet Node Sync Verification",
-            metadata: { type: "test_verification" },
-            uid: "test-user-id"
-        }, {
-            onReadyForServerApproval: (paymentId) => {
-                console.log("Payment created successfully. ID Ready for Server Approval:", paymentId);
-                // The portal engine tracks this interaction block to green-light Step 10
-            },
-            onReadyForServerCompletion: (paymentId, txid) => { 
-                console.log("Transaction successfully recorded on ledger. Complete:", txid); 
-            },
-            onCancel: (paymentId) => { 
-                console.log("Transaction Cancelled by User Node."); 
-            },
-            onError: (error, payment) => { 
-                console.error("Blockchain Payment Error Matrix:", error); 
-            }
-        });
-    } catch (err) {
-        console.error("Transaction failed:", err);
-    }
-}
