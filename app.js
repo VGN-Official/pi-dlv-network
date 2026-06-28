@@ -299,6 +299,44 @@ if (typeof Pi === 'undefined' || !Pi.createPayment) {
 
     console.log(`Launching secure wallet container for ${cleanAmount} π...`);
 
+    // 🔴 ENVIRONMENTAL GUARD: If testing on PC, bypass the native wallet crash
+    if (!isPiBrowserEngine || typeof Pi === 'undefined' || !Pi.createPayment) {
+        console.warn("[Pi-DLV Simulator] Non-Pi environment detected. Simulating successful ledger handshake for PC desktop testing...");
+        
+        // Instantly simulate a successful blockchain confirmation so your UI renders the report
+        if (button) {
+            button.innerText = "🔄 LOGGING TELEMETRY...";
+            button.disabled = true;
+        }
+        
+        setTimeout(() => {
+            // Trigger your native UI rendering logic directly on the PC screen
+            console.log("[Pi-DLV Simulator] Rendering execution report...");
+            
+            if (card) {
+                card.style.opacity = "0.3";
+                card.style.transform = "scale(0.98)";
+                setTimeout(() => card.remove(), 400);
+            }
+
+            const verifiedDisplay = document.getElementById('statsVerifiedCount'); 
+            if (verifiedDisplay) {
+                let currentGigs = parseInt(verifiedDisplay.innerText) || 0;
+                verifiedDisplay.innerText = currentGigs + 1;
+            }
+
+            const escrowDisplay = document.getElementById('statsPiEarned');
+            if (escrowDisplay) {
+                let currentEscrow = parseFloat(escrowDisplay.innerText.replace(/[^\d.]/g, '')) || 0;
+                escrowDisplay.innerText = `${(currentEscrow + cleanAmount).toFixed(2)} π`;
+            }
+
+            alert(`🔒 Desktop Simulation Complete!\nTask report rendered successfully on local screen matrix.`);
+        }, 1000);
+        
+        return; // Stop execution here so the native Pi SDK doesn't run and crash the script
+    }
+
     Pi.createPayment({
         amount: cleanAmount, 
         memo: `Verification for ${gigTitle}`,
