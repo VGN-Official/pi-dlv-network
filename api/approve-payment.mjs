@@ -64,13 +64,23 @@ export default async function handler(req, res) {
             throw testnetError;
         }
 
-    } catch (error) {
+   } catch (error) {
         let serverErrorTitle = "Unknown Error";
         let serverErrorDetail = "No details provided";
 
         if (error.response && error.response.data) {
             serverErrorTitle = error.response.data.title || serverErrorTitle;
             serverErrorDetail = error.response.data.detail || JSON.stringify(error.response.data);
+            
+            // 🟢 DEFENSIVE INTERCEPT: If the ledger already approved it, force a success response!
+            if (error.response.data.error === "already_approved" || serverErrorDetail.includes("already approved")) {
+                console.log("ℹ️ Pi Ledger State: Payment was already approved previously. Forwarding success lane.");
+                return res.status(200).json({ 
+                    approved: true, 
+                    message: "Payment already cleared approval state.",
+                    wasAlreadyApproved: true 
+                });
+            }
         } else {
             serverErrorDetail = error.message;
         }
@@ -78,4 +88,5 @@ export default async function handler(req, res) {
         console.error(`🔴 PI CORE REJECTED HANDSHAKE -> Title: ${serverErrorTitle} | Details: ${serverErrorDetail}`);
         return res.status(500).json({ error: "Internal validation failure", details: serverErrorDetail });
     }
+
 }
