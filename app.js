@@ -25,6 +25,18 @@ window.onerror = function(message, source, lineno, colno, error) {
     return false;
 };
 
+// Utility to pipe console logs straight to the UI Debug Box
+function logToTerminal(message) {
+    const logBox = document.getElementById('debug-log-box');
+    if (logBox) {
+        const timestamp = new Date().toLocaleTimeString();
+        // Append the new log line with a neon prompt indicator
+        logBox.innerHTML += `<div>[${timestamp}] $ ${message}</div>`;
+        // Auto-scroll to the bottom so the latest event is always visible
+        logBox.scrollTop = logBox.scrollHeight;
+    }
+}
+
 // =======================================================
 // 1. INITIALIZE PI ENGINE & AUTO-SWEEP PENDING BLOCKS
 // =======================================================
@@ -312,7 +324,7 @@ window.executeVerification = function(event, gigId, payout, gigTitle) {
     // =======================================================
     // REAL MOBILE BLOCKCHAIN ENGINE
     // =======================================================
-    console.log(`Initializing secure blockchain checkout transaction for ${cleanAmount} π...`);
+    logToTerminal(`Initializing checkout routing container for ${cleanAmount} π...`);
 
     if (button) {
         button.innerText = "🔄 LOGGING TELEMETRY...";
@@ -324,29 +336,38 @@ window.executeVerification = function(event, gigId, payout, gigTitle) {
             amount: cleanAmount,
             memo: `Verify: ${cleanTitle}`,
             metadata: { 
-                // CRITICAL FIX: Force the ID to a clean string format
-                gigId: String(gigId)
+               gigId: String(gigId)
             }
         }, {
             onReadyForServerApproval: function(paymentId) {
-                console.log(`📡 Frontend caught verified Payment ID from SDK: ${paymentId}`);
+                logToTerminal(`📡 SDK caught signature! ID: ${paymentId.substring(0, 8)}...`);
+                logToTerminal(`🚀 Forwarding payload to Vercel verification path...`);
                 
                 if (!paymentId) {
+                    logToTerminal(`🔴 CRITICAL: Empty payment signature returned.`);
                     if (button) { button.innerText = "Verify Data"; button.disabled = false; }
                     return;
                 }
 
-             fetch('/api/approve-payment', {
+                fetch('/api/approve-payment', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ paymentId: paymentId }) 
                 })
                 .then(res => res.json())
-                .then(data => console.log("Backend server verification match:", data))
-                .catch(err => console.error("Transmission breakdown to Vercel path:", err));
+                .then(data => {
+                    logToTerminal(`🟢 Backend verification matched. Settlement channel authorized!`);
+                    console.log("Backend server verification match:", data);
+                })
+                .catch(err => {
+                    logToTerminal(`🔴 Transmission breakdown to Vercel path.`);
+                    console.error(err);
+                });
             },
             onReadyForServerCompletion: function(paymentId, txid) {
-                console.log(`🟢 Blockchain transaction confirmed! TXID: ${txid}`);
+                logToTerminal(`🟢 LEDGER MATCH CONFIRMED! TXID: ${txid.substring(0, 10)}...`);
+                logToTerminal(`🔒 Telemetry Matrix Locked. Updating local dashboard metrics...`);
+                
                 if (card) { card.style.opacity = "0.3"; setTimeout(() => card.remove(), 400); }
                 
                 // Forward completion signature straight to backend
@@ -360,17 +381,19 @@ window.executeVerification = function(event, gigId, payout, gigTitle) {
                 window.location.reload();
             },
             onCancel: function(paymentId) {
-                console.log("Transaction explicitly cancelled by operator:", paymentId);
+                logToTerminal(`⚠️ Transaction explicitly cancelled by operator.`);
                 if (button) { button.innerText = "Verify Data"; button.disabled = false; }
             },
             onError: function(error, payment) {
+                logToTerminal(`🔴 CRITICAL: Wallet core failure exception thrown.`);
                 console.error("Critical Pi SDK Runtime Exception Error:", error);
                 alert("Terminal Sync Error: Blockchain payment failed.");
                 if (button) { button.innerText = "Verify Data"; button.disabled = false; }
             }
         });
     } catch (paymentBlockErr) {
+        logToTerminal(`🔴 Block Intercept Exception triggered.`);
         console.error("[Pi-DLV Core] Blockchain block intercept:", paymentBlockErr);
         if (button) { button.innerText = "Verify Data"; button.disabled = false; }
     }
- };
+}
